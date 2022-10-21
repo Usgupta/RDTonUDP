@@ -44,7 +44,7 @@ def main(args):
     address = args[1] if len(args) > 1 else "localhost"
 
     try:
-        serverPort = 12000
+        serverPort = port
         serverSocket = socket(AF_INET, SOCK_DGRAM)
         serverSocket.bind(('', serverPort)) 
                             # If the packet is for transferring a chunk of the file
