@@ -121,20 +121,35 @@ if __name__ == '__main__':
     parser.add_argument("<drop probability>", help="packet discard probability")
     parser.add_argument('<verbose>', nargs='?', default=0)
     args = parser.parse_args()
+
+    forward_recv_port = 9991 # the port to listen on to get messages from the sender
+    backward_recv_port = 9993 # emulator's receiving UDP port from receiver
+
+    receiver_addr = "129.97.167.52" # receiver's network address
+    receiver_recv_port = 9994 # receiver's receiving UDP port
+
+    sender_addr = "129.97.167.27" # sender's network address
+    sender_recv_port = 9992 # the sender's receiving UDP port number
+
+    prob_discard = 0 # the probability a packet is discarded
+
+    verbose = 1 
+    max_delay = 0
+
     # set up sockets to be listening on
     args = args.__dict__ # A LAZY FIX
-    max_delay = int(args["<Maximum Delay>"])
-    forward_recv_port = int(args["<Forward receiving port>"])
-    backward_recv_port = int(args["<Backward receiving port>"])
-    receiver_addr = str(args["<Receiver's network address>"])
-    receiver_recv_port = int(args["<Reciever’s receiving UDP port number>"])
-    sender_addr = str(args["<Sender's network address>"])
-    sender_recv_port = int(args["<Sender's receiving UDP port number>"])
-    prob_discard = float(args["<drop probability>"])
+    # max_delay = int(args["<Maximum Delay>"])
+    # forward_recv_port = int(args["<Forward receiving port>"])
+    # backward_recv_port = int(args["<Backward receiving port>"])
+    # receiver_addr = str(args["<Receiver's network address>"])
+    # receiver_recv_port = int(args["<Reciever’s receiving UDP port number>"])
+    # sender_addr = str(args["<Sender's network address>"])
+    # sender_recv_port = int(args["<Sender's receiving UDP port number>"])
+    # prob_discard = float(args["<drop probability>"])
     if prob_discard < 0 or prob_discard > 1:
         raise RuntimeError("Probability of discarding a packet should be between 0 and 1")
 
-    verbose = (1 == int(args["<verbose>"]))
+    # verbose = (1 == int(args["<verbose>"]))
 
 
     # start a thread for both forward and backword network flow
