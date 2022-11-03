@@ -40,13 +40,20 @@ def read_bytes(socket, length):
 
 
 def main(args):
-    port = int(args[0]) if len(args) > 0 else 4321
-    address = args[1] if len(args) > 1 else "localhost"
+    # port = int(args[0]) if len(args) > 0 else 4321
+    # address = args[1] if len(args) > 1 else "localhost"
+
+    
 
     try:
-        serverPort = port
+
+        emulator_addr = "129.97.167.27" #emulator address
+        emulator_port = 9993 #emulator port
+        clientSocket = socket(AF_INET, SOCK_DGRAM)
+        rec_port = 9994
+        # serverPort = port
         serverSocket = socket(AF_INET, SOCK_DGRAM)
-        serverSocket.bind(('', serverPort)) 
+        serverSocket.bind(('', rec_port)) 
                             # If the packet is for transferring a chunk of the file
                             # start_time = time.time()
 
@@ -64,7 +71,7 @@ def main(args):
 
         # Write the file with 'recv_' prefix
         with open(
-            "filename", mode="wb"
+            filename, mode="wb"
         ) as fp:
 
             fp.write(message1)

@@ -8,18 +8,18 @@ import socket
 # initialize to dumby values for sanity checking purposes
 max_delay = None # max delay a packet can be delayed by in milliseconds
 
-forward_recv_port = None # the port to listen on to get messages from the sender
-backward_recv_port = None # emulator's receiving UDP port from receiver
+forward_recv_port = 9991 # the port to listen on to get messages from the sender
+backward_recv_port = 9993 # emulator's receiving UDP port from receiver
 
-receiver_addr = None # receiver's network address
-receiver_recv_port = None # receiver's receiving UDP port
+receiver_addr = "129.97.167.52" # receiver's network address
+receiver_recv_port = 9994 # receiver's receiving UDP port
 
-sender_addr = None # sender's network address
-sender_recv_port = None # the sender's receiving UDP port number
+sender_addr = "129.97.167.27" # sender's network address
+sender_recv_port = 9992 # the sender's receiving UDP port number
 
-prob_discard = None # the probability a packet is discarded
+prob_discard = 0 # the probability a packet is discarded
 
-verbose = False 
+verbose = True 
 
 data_buff = Queue()
 ack_buff = Queue()

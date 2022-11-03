@@ -20,9 +20,14 @@ def convert_bytes_to_int(xbytes):
     """
     return int.from_bytes(xbytes, "big")
 
-serverName = "127.0.0.1"
-serverPort = 12000
+emulator_addr = "129.97.167.51" #emulator address
+emulator_port = 9991 #emulator port
 clientSocket = socket(AF_INET, SOCK_DGRAM)
+sender_port = 9992
+clientSocket.bind(('', sender_port)) 
+
+# print(sender_port)
+
 
 
 filename = "test.txt"
@@ -40,7 +45,7 @@ filename_bytes = bytes(filename, encoding="utf8")
 # clientSocket.sendto(filename.encode(),(serverName, serverPort))
 # s.sendall(convert_int_to_bytes(0))
 # s.sendall(convert_int_to_bytes(len(filename_bytes)))
-clientSocket.sendto(filename_bytes,(serverName, serverPort))
+clientSocket.sendto(filename_bytes,(emulator_addr, emulator_port))
 
 # Send the file
 with open(filename, mode="rb") as fp:
@@ -48,7 +53,7 @@ with open(filename, mode="rb") as fp:
     # s.sendall(convert_int_to_bytes(1))
     # s.sendall(convert_int_to_bytes(len(data)))
     # s.sendall(data)
-    clientSocket.sendto(data,(serverName, serverPort))
+    clientSocket.sendto(data,(emulator_addr, emulator_port))
 
 
 # message = "hello"
