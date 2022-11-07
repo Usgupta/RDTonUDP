@@ -3,6 +3,8 @@ from random import *
 import sys
 import pathlib
 
+from packet import Packet
+
 
 from socket import *
 
@@ -29,6 +31,10 @@ clientSocket.bind(('', sender_port))
 # print(sender_port)
 
 
+# integer type; # // 0: ACK, 1: Data, 2: EOT
+# integer seqnum; # // Modulo 32
+# integer length; # // Length of the String variable ‘data’ // String with Max Length 500
+# String data;
 
 filename = "test.txt"
 
@@ -46,16 +52,28 @@ filename_bytes = bytes(filename, encoding="utf8")
 # s.sendall(convert_int_to_bytes(0))
 # s.sendall(convert_int_to_bytes(len(filename_bytes)))
 clientSocket.sendto(filename_bytes,(emulator_addr, emulator_port))
+seqno = -1
 
 # Send the file
 with open(filename, mode="rb") as fp:
     data = fp.read()
+    ptype = 1
+    seqno+=1
+    seqno=seqno%32
+    lendata = len(data)
+    packet = Packet(ptype,seqno,lendata,data)
+
     # s.sendall(convert_int_to_bytes(1))
     # s.sendall(convert_int_to_bytes(len(data)))
     # s.sendall(data)
-    clientSocket.sendto(data,(emulator_addr, emulator_port))
+    clientSocket.sendto(packet.encode(),(emulator_addr, emulator_port))
 
-
+#send EOT
+data = fp.read()
+ptype = 2
+seqno += 1
+seqno=seqno%32
+lendata = 0
 # message = "hello"
 # clientSocket.sendto(message.encode(),(serverName, serverPort))
 modifiedMessage, serverAddress = clientSocket.recvfrom(2048)
