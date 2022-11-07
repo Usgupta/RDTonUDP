@@ -6,6 +6,7 @@ import time
 from datetime import datetime
 import secrets
 import traceback
+from packet import Packet
 
 
 
@@ -68,7 +69,7 @@ def main(args):
         recvd_packet = serverSocket.recv(1024)
         print("got the packet")
 
-        typ, seqnum, length, data = recvd_packet.decode()
+        typ, seqnum, length, data = Packet(recvd_packet).decode()
         print("packet vals are", typ,seqnum,length,data)
         if typ==2:
             print("EOT")
@@ -86,7 +87,7 @@ def main(args):
                 filename, mode="wb"
             ) as fp:
 
-                fp.write(data)
+                fp.write(bytes(data, encoding='utf-8'))
 
                 # fp.write(message2)
             print("finidhed"
