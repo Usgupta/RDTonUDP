@@ -66,33 +66,36 @@ def main(args):
 
         filename = "rec.txt"
 
-        recvd_packet = serverSocket.recv(1024)
-        print("got the packet")
-
-        typ, seqnum, length, data = Packet(recvd_packet).decode()
-        print("packet vals are", typ,seqnum,length,data)
-        if typ==2:
-            print("EOT")
-            exit()
-        else:
+        while True:
 
 
+            recvd_packet = serverSocket.recv(1024)
+            print("got the packet")
 
-        # message1, clientAddress = serverSocket.recvfrom(2048) 
-        # message2, clientAddress = serverSocket.recvfrom(2048) 
+            typ, seqnum, length, data = Packet(recvd_packet).decode()
+            print("packet vals are", typ,seqnum,length,data)
+            if typ==2:
+                print("EOT")
+                exit()
+            else:
 
 
-        # Write the file with 'recv_' prefix
-            with open(
-                filename, mode="wb"
-            ) as fp:
 
-                fp.write(bytes(data, encoding='utf-8'))
+            # message1, clientAddress = serverSocket.recvfrom(2048) 
+            # message2, clientAddress = serverSocket.recvfrom(2048) 
 
-                # fp.write(message2)
-            print("finidhed"
-                # f"Finished receiving file in {(time.time() - start_time)}s!"
-            )
+
+            # Write the file with 'recv_' prefix
+                with open(
+                    filename, mode="wb"
+                ) as fp:
+
+                    fp.write(bytes(data, encoding='utf-8'))
+
+                    # fp.write(message2)
+                print("finidhed"
+                    # f"Finished receiving file in {(time.time() - start_time)}s!"
+                )
     except Exception as e:
         print(e)
         # s.close()

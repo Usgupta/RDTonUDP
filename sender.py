@@ -22,6 +22,10 @@ def convert_bytes_to_int(xbytes):
     """
     return int.from_bytes(xbytes, "big")
 
+
+
+MAXREADSIZE = 500
+
 emulator_addr = "129.97.167.47" #emulator address 010
 emulator_port = 14836 #emulator port
 clientSocket = socket(AF_INET, SOCK_DGRAM)
@@ -56,7 +60,7 @@ seqno = -1
 
 # Send the file
 with open(filename, mode="rb") as fp:
-    data = fp.read().decode()
+    data = fp.read(MAXREADSIZE).decode()
     # print(type(data))
 
     ptype = 1
@@ -77,6 +81,8 @@ ptype = 2
 seqno += 1
 seqno=seqno%32
 lendata = 0
+packet = Packet(ptype,seqno,lendata,data)
+clientSocket.sendto(packet.encode(),(emulator_addr, emulator_port))
 # message = "hello"
 # clientSocket.sendto(message.encode(),(serverName, serverPort))
 modifiedMessage, serverAddress = clientSocket.recvfrom(2048)
