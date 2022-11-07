@@ -51,17 +51,18 @@ filename_bytes = bytes(filename, encoding="utf8")
 # clientSocket.sendto(filename.encode(),(serverName, serverPort))
 # s.sendall(convert_int_to_bytes(0))
 # s.sendall(convert_int_to_bytes(len(filename_bytes)))
-clientSocket.sendto(filename_bytes,(emulator_addr, emulator_port))
+# clientSocket.sendto(filename_bytes,(emulator_addr, emulator_port))
 seqno = -1
 
 # Send the file
 with open(filename, mode="rb") as fp:
-    data = fp.read()
+    data = str(fp.read())
     ptype = 1
     seqno+=1
     seqno=seqno%32
     lendata = len(data)
     packet = Packet(ptype,seqno,lendata,data)
+    # print(type(packet.encode()))
 
     # s.sendall(convert_int_to_bytes(1))
     # s.sendall(convert_int_to_bytes(len(data)))
@@ -69,7 +70,7 @@ with open(filename, mode="rb") as fp:
     clientSocket.sendto(packet.encode(),(emulator_addr, emulator_port))
 
 #send EOT
-data = fp.read()
+data = ""
 ptype = 2
 seqno += 1
 seqno=seqno%32

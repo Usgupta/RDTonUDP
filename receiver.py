@@ -1,4 +1,4 @@
-import imp
+# import imp
 import pathlib
 from socket import *
 import sys
@@ -66,8 +66,10 @@ def main(args):
         filename = "rec.txt"
 
         recvd_packet = serverSocket.recv(1024)
+        print("got the packet")
 
         typ, seqnum, length, data = recvd_packet.decode()
+        print("packet vals are", typ,seqnum,length,data)
         if typ==2:
             print("EOT")
             exit()
@@ -85,6 +87,7 @@ def main(args):
             ) as fp:
 
                 fp.write(data)
+
                 # fp.write(message2)
             print("finidhed"
                 # f"Finished receiving file in {(time.time() - start_time)}s!"
