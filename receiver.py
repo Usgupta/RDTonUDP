@@ -49,7 +49,7 @@ def main(args):
     try:
 
         emulator_addr = "129.97.167.27" #emulator address
-        emulator_port = 15539 #emulator port
+        emulator_port = 6186 #emulator port
         clientSocket = socket(AF_INET, SOCK_DGRAM)
         rec_port = 9994
         # serverPort = port

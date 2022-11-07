@@ -23,7 +23,7 @@ def convert_bytes_to_int(xbytes):
     return int.from_bytes(xbytes, "big")
 
 emulator_addr = "129.97.167.51" #emulator address 002
-emulator_port = 43939 #emulator port
+emulator_port = 14836 #emulator port
 clientSocket = socket(AF_INET, SOCK_DGRAM)
 sender_port = 9992
 clientSocket.bind(('', sender_port)) 
