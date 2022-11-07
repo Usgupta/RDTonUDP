@@ -56,7 +56,10 @@ if __name__ == '__main__':
     testmsg = "testmsg"
     packet1 = Packet(0, 1, len(testmsg), testmsg)
     print(packet1)
+    # print("encoded is")
     packet1_enc = packet1.encode()
     print(packet1_enc)
+    # print("encoded is")
+
     packet2 = Packet(packet1_enc)
     print(packet2)

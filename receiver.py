@@ -48,7 +48,7 @@ def main(args):
     try:
 
         emulator_addr = "129.97.167.27" #emulator address
-        emulator_port = 9993 #emulator port
+        emulator_port = 15539 #emulator port
         clientSocket = socket(AF_INET, SOCK_DGRAM)
         rec_port = 9994
         # serverPort = port
@@ -89,8 +89,8 @@ def main(args):
             print("finidhed"
                 # f"Finished receiving file in {(time.time() - start_time)}s!"
             )
-        # except Exception as e:
-        #     print(e)
+    except Exception as e:
+        print(e)
         # s.close()
 
 
