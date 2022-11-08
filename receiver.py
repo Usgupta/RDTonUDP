@@ -51,7 +51,7 @@ def main(args):
         emulator_addr = "129.97.167.47" #emulator address
         emulator_port = 6186 #emulator port
         clientSocket = socket(AF_INET, SOCK_DGRAM)
-        rec_port = 9994
+        rec_port = 52081
         # serverPort = port
         serverSocket = socket(AF_INET, SOCK_DGRAM)
         serverSocket.bind(('', rec_port)) 
@@ -65,6 +65,7 @@ def main(args):
                             # print(file_data)
 
         filename = "rec.txt"
+        finaldata = {}
 
         while True:
 
@@ -76,26 +77,29 @@ def main(args):
             print("packet vals are", typ,seqnum,length,data)
             if typ==2:
                 print("EOT")
+
+                with open(
+                    filename, mode="w"
+                ) as fp:
+
+                    for seqno, seqdata in sorted(finaldata.items()):
+                        fp.write(seqdata)
+
+                    # fp.write(message2)
+                print("finidhed"
+                    # f"Finished receiving file in {(time.time() - start_time)}s!"
+                )
+
                 exit()
             else:
-
-
+                finaldata[seqnum]=data
 
             # message1, clientAddress = serverSocket.recvfrom(2048) 
             # message2, clientAddress = serverSocket.recvfrom(2048) 
 
 
             # Write the file with 'recv_' prefix
-                with open(
-                    filename, mode="wb"
-                ) as fp:
-
-                    fp.write(bytes(data, encoding='utf-8'))
-
-                    # fp.write(message2)
-                print("finidhed"
-                    # f"Finished receiving file in {(time.time() - start_time)}s!"
-                )
+                
     except Exception as e:
         print(e)
         # s.close()

@@ -59,22 +59,30 @@ filename_bytes = bytes(filename, encoding="utf8")
 seqno = -1
 
 # Send the file
-with open(filename, mode="rb") as fp:
-    data = fp.read(MAXREADSIZE).decode()
+with open(filename, mode="r") as fp:
+    data = fp.read()
+    if len(data)>500:
+        for i in range(0,len(data),500):
+            # print(type(data))
 
-    for i in range(500,len(data),500):
-        # print(type(data))
+            ptype = 1
+            seqno+=1
+            seqno=seqno%32
+            lendata = len(data[i:min(i+500,len(data))])
+            # print(data)
+            print(i)
+            print(data[i:min(i+500,len(data))])
+            # print(data[i-500:i])
+            packet = Packet(ptype,seqno,lendata,data[i:min(i+500,len(data))])
+            clientSocket.sendto(packet.encode(),(emulator_addr, emulator_port))
 
-        ptype = 1
-        seqno+=1
-        seqno=seqno%32
-        lendata = len(data[:i])
-        packet = Packet(ptype,seqno,lendata,data)
-        # print(type(packet.encode()))
+            # print(type(packet.encode()))
 
-        # s.sendall(convert_int_to_bytes(1))
-        # s.sendall(convert_int_to_bytes(len(data)))
-        # s.sendall(data)
+            # s.sendall(convert_int_to_bytes(1))
+            # s.sendall(convert_int_to_bytes(len(data)))
+            # s.sendall(data)
+    else:
+        packet = Packet(1,1,len(data),data)
         clientSocket.sendto(packet.encode(),(emulator_addr, emulator_port))
 
 #send EOT
