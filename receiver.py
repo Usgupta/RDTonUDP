@@ -56,9 +56,11 @@ def main(args):
 
     try:
 
-        emulator_addr = "129.97.167.47" #emulator address
+        # emulator_addr = "129.97.167.47" #emulator address 010
+        emulator_addr = "129.97.167.51" #emulator address 002
+
         emulator_port = 6186 #emulator port
-        clientSocket = socket(AF_INET, SOCK_DGRAM)
+        # clientSocket = socket(AF_INET, SOCK_DGRAM)
         rec_port = 52081
         # serverPort = port
         serverSocket = socket(AF_INET, SOCK_DGRAM)
@@ -80,6 +82,7 @@ def main(args):
 
             recvd_packet = serverSocket.recv(1024)
             print("got the packet")
+            print(recvd_packet)
 
             typ, seqnum, length, data = Packet(recvd_packet).decode()
             print("packet vals are", typ,seqnum,length,data)
@@ -97,12 +100,16 @@ def main(args):
                 print("finidhed"
                     # f"Finished receiving file in {(time.time() - start_time)}s!"
                 )
-                sendEOT(emulator_addr, emulator_port, clientSocket, len(finaldata))
+                serverSocket.sendto(recvd_packet,(emulator_addr, emulator_port))
+
+                # sendEOT(emulator_addr, emulator_port, clientSocket, len(finaldata))
 
 
                 exit()
             else:
                 finaldata[seqnum]=data
+                # typ = 0
+
 
             # message1, clientAddress = serverSocket.recvfrom(2048) 
             # message2, clientAddress = serverSocket.recvfrom(2048) 

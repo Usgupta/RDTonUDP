@@ -33,7 +33,8 @@ def sendEOT(emulator_addr, emulator_port, clientSocket, seqno):
 
 MAXREADSIZE = 500
 
-emulator_addr = "129.97.167.47" #emulator address 010
+# emulator_addr = "129.97.167.47" #emulator address 010
+emulator_addr = "129.97.167.51" #emulator address 002
 emulator_port = 14836 #emulator port
 clientSocket = socket(AF_INET, SOCK_DGRAM)
 sender_port = 2658
@@ -82,18 +83,18 @@ with open(filename, mode="r") as fp:
             clientSocket.sendto(packet.encode(),(emulator_addr, emulator_port))
 
     else:
-        packet = Packet(1,1,len(data),data)
+        seqno+=1
+        seqno=seqno%32
+        packet = Packet(1,seqno,len(data),data)
         clientSocket.sendto(packet.encode(),(emulator_addr, emulator_port))
 
 #send EOT
 
 sendEOT(emulator_addr, emulator_port, clientSocket, seqno)
-# message = "hello"
-# clientSocket.sendto(message.encode(),(serverName, serverPort))
-recvd_packet = clientSocket.recvfrom(1024)
+print("rec pack")
+recvd_packet = clientSocket.recv(1024)
+print(recvd_packet)
 typ, seqnum, length, data = Packet(recvd_packet).decode()
 if typ==2:
     print("got eot from rec")
-
-# print(modifiedMessage.decode())
     clientSocket.close()
