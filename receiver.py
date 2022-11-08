@@ -39,6 +39,14 @@ def read_bytes(socket, length):
 
     return b"".join(buffer)
 
+def sendEOT(emulator_addr, emulator_port, clientSocket, seqno):
+    data = ""
+    ptype = 2
+    seqno += 1
+    seqno=seqno%32
+    lendata = 0
+    packet = Packet(ptype,seqno,lendata,data)
+    clientSocket.sendto(packet.encode(),(emulator_addr, emulator_port))
 
 def main(args):
     # port = int(args[0]) if len(args) > 0 else 4321
@@ -89,6 +97,8 @@ def main(args):
                 print("finidhed"
                     # f"Finished receiving file in {(time.time() - start_time)}s!"
                 )
+                sendEOT(emulator_addr, emulator_port, clientSocket, len(finaldata))
+
 
                 exit()
             else:

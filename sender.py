@@ -22,7 +22,14 @@ def convert_bytes_to_int(xbytes):
     """
     return int.from_bytes(xbytes, "big")
 
-
+def sendEOT(emulator_addr, emulator_port, clientSocket, seqno):
+    data = ""
+    ptype = 2
+    seqno += 1
+    seqno=seqno%32
+    lendata = 0
+    packet = Packet(ptype,seqno,lendata,data)
+    clientSocket.sendto(packet.encode(),(emulator_addr, emulator_port))
 
 MAXREADSIZE = 500
 
@@ -69,32 +76,24 @@ with open(filename, mode="r") as fp:
             seqno+=1
             seqno=seqno%32
             lendata = len(data[i:min(i+500,len(data))])
-            # print(data)
             print(i)
             print(data[i:min(i+500,len(data))])
-            # print(data[i-500:i])
             packet = Packet(ptype,seqno,lendata,data[i:min(i+500,len(data))])
             clientSocket.sendto(packet.encode(),(emulator_addr, emulator_port))
 
-            # print(type(packet.encode()))
-
-            # s.sendall(convert_int_to_bytes(1))
-            # s.sendall(convert_int_to_bytes(len(data)))
-            # s.sendall(data)
     else:
         packet = Packet(1,1,len(data),data)
         clientSocket.sendto(packet.encode(),(emulator_addr, emulator_port))
 
 #send EOT
-data = ""
-ptype = 2
-seqno += 1
-seqno=seqno%32
-lendata = 0
-packet = Packet(ptype,seqno,lendata,data)
-clientSocket.sendto(packet.encode(),(emulator_addr, emulator_port))
+
+sendEOT(emulator_addr, emulator_port, clientSocket, seqno)
 # message = "hello"
 # clientSocket.sendto(message.encode(),(serverName, serverPort))
-modifiedMessage, serverAddress = clientSocket.recvfrom(2048)
-print(modifiedMessage.decode())
-clientSocket.close()
+recvd_packet = clientSocket.recvfrom(1024)
+typ, seqnum, length, data = Packet(recvd_packet).decode()
+if typ==2:
+    print("got eot from rec")
+
+# print(modifiedMessage.decode())
+    clientSocket.close()
