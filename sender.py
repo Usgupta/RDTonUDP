@@ -33,8 +33,8 @@ def sendEOT(emulator_addr, emulator_port, clientSocket, seqno):
 
 MAXREADSIZE = 500
 
-# emulator_addr = "129.97.167.47" #emulator address 010
-emulator_addr = "129.97.167.51" #emulator address 002
+emulator_addr = "129.97.167.47" #emulator address 010
+# emulator_addr = "129.97.167.51" #emulator address 002
 emulator_port = 14836 #emulator port
 clientSocket = socket(AF_INET, SOCK_DGRAM)
 sender_port = 2658
@@ -48,7 +48,7 @@ clientSocket.bind(('', sender_port))
 # integer length; # // Length of the String variable ‘data’ // String with Max Length 500
 # String data;
 
-filename = "test.txt"
+filename = "longtest.txt"
 
 while filename != "-1" and (not pathlib.Path(filename).is_file()):
     filename = input("Invalid filename. Please try again:").strip()
@@ -81,12 +81,16 @@ with open(filename, mode="r") as fp:
             print(data[i:min(i+500,len(data))])
             packet = Packet(ptype,seqno,lendata,data[i:min(i+500,len(data))])
             clientSocket.sendto(packet.encode(),(emulator_addr, emulator_port))
+            recvd_packet = clientSocket.recv(1024)
+            print(recvd_packet)
 
     else:
         seqno+=1
         seqno=seqno%32
         packet = Packet(1,seqno,len(data),data)
         clientSocket.sendto(packet.encode(),(emulator_addr, emulator_port))
+        recvd_packet = clientSocket.recv(1024)
+        print(recvd_packet)
 
 #send EOT
 
