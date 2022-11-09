@@ -81,7 +81,7 @@ packets = [None] * 32
 
 def makePackets():
     if len(data)>500:
-        while(readptr!=len(data)):
+        while(readptr<=len(data)):
             if(len(packets)==32 and packets.count(None) == 0):
                 break
             seqno = packet.index(None)
@@ -92,9 +92,14 @@ def makePackets():
             packet = Packet(ptype,seqno,lendata,data[readptr:min(readptr+500,len(data))])
             packets[seqno] = packet
             readptr+=500
-
     else:
         packets[0] = packet(1,0,len(data),data)
+
+    if readptr>len(data) or len(data)<500:
+        seqno = packet.index(None)
+        ptype = 2
+        lendata = 0
+        packets[seqno] = Packet(ptype,seqno,lendata,"")
 
 def sendPackets(packets):
     if nextseqnum-send_base!=windowsize:
@@ -111,6 +116,8 @@ def recAck(packets):
     recvd_packet = Packet(clientSocket.recv(1024))
     timestamp+=1
     print(recvd_packet)
+    addlog(acklog,recvd_packet.seqnum) #add seq num to seq log
+
     if recvd_packet.seqnum == send_base:
         packets[:send_base+1]=None
         send_base+=1
@@ -123,15 +130,6 @@ def recAck(packets):
         windowsize = 1
         dupcount=0
         #restart timer
-
-
-
-
-        
-
-
-
-
 
 
 # def makePackets(seqnumlog, addlog, emulator_addr, emulator_port, clientSocket, filename, seqno):
