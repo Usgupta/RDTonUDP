@@ -5,6 +5,7 @@ import pathlib
 
 from packet import Packet
 
+import threading
 
 from socket import *
 
@@ -19,10 +20,11 @@ MAXN = 10
 send_base = 0
 nextseqnum = 0
 
-
 alllogfiles = [seqnumlog,acklog,Nlog]
 for i in range(3):
     file = open(alllogfiles[i],"w")
+    if alllogfiles[i]=="Nlog":
+        file.write(str(timestamp) + " " + str(windowsize) + "\n")
     file.close()
 
 def addlog(file_name,data):
@@ -30,16 +32,17 @@ def addlog(file_name,data):
         print("opened {file_name} file")
         fp.write(str(timestamp) + " " + str(data) + "\n")
 
-def sendEOT(emulator_addr, emulator_port, clientSocket, seqno):
-    data = ""
-    ptype = 2
-    seqno += 1
-    seqno=seqno%32
-    lendata = 0
-    packet = Packet(ptype,seqno,lendata,data)
-    clientSocket.sendto(packet.encode(),(emulator_addr, emulator_port))
 
-MAXREADSIZE = 500
+# def sendEOT(emulator_addr, emulator_port, clientSocket, seqno):
+#     data = ""
+#     ptype = 2
+#     seqno += 1
+#     seqno=seqno%32
+#     lendata = 0
+#     packet = Packet(ptype,seqno,lendata,data)
+#     clientSocket.sendto(packet.encode(),(emulator_addr, emulator_port))
+
+# MAXREADSIZE = 500
 # emulator_addr = "129.97.167.46" #emulator address 014
 
 # emulator_addr = "129.97.167.47" #emulator address 010
@@ -59,8 +62,8 @@ clientSocket.bind(('', sender_port))
 
 filename = "longtest.txt"
 
-while filename != "-1" and (not pathlib.Path(filename).is_file()):
-    filename = input("Invalid filename. Please try again:").strip()
+# while filename != "-1" and (not pathlib.Path(filename).is_file()):
+#     filename = input("Invalid filename. Please try again:").strip()
 
 # if filename == "-1":
 #     s.sendall(convert_int_to_bytes(2))
@@ -78,7 +81,6 @@ with open(filename, mode="r") as fp:
 # Send the file
 readptr = 0
 packets = [None] * 32
-
 def makePackets():
     if len(data)>500:
         while(readptr<=len(data)):
@@ -101,7 +103,9 @@ def makePackets():
         lendata = 0
         packets[seqno] = Packet(ptype,seqno,lendata,"")
 
-def sendPackets(packets):
+makePackets() #execute it once intially to initialise the packets list
+
+def sendPackets():
     if nextseqnum-send_base!=windowsize:
         clientSocket.sendto(packets[nextseqnum].encode(),(emulator_addr, emulator_port))
         timestamp+=1
@@ -110,25 +114,33 @@ def sendPackets(packets):
         nextseqnum=nextseqnum%32
     # if dup:
         
-filepackets = makePackets(filename)
+# filepackets = makePackets(filename)
+
 dupcount = 0
-def recAck(packets):
+def recAck():
     recvd_packet = Packet(clientSocket.recv(1024))
     timestamp+=1
     print(recvd_packet)
     addlog(acklog,recvd_packet.seqnum) #add seq num to seq log
 
-    if recvd_packet.seqnum == send_base:
+    if recvd_packet.typ == 2:
+        print("got eot from rec")
+        clientSocket.close()
+        exit()
+    elif recvd_packet.seqnum == send_base:
         packets[:send_base+1]=None
         send_base+=1
         send_base%=32
         windowsize = min(windowsize+1,MAXN)
+        makePackets()
     elif recvd_packet.seqnum == send_base-1 and dupcount<3:
         dupcount+=1
     elif dupcount==3:
         clientSocket.sendto(packets[send_base].encode(),(emulator_addr, emulator_port))
         windowsize = 1
         dupcount=0
+    
+    
         #restart timer
 
 
@@ -163,11 +175,21 @@ def recAck(packets):
 
 #send EOT
 
-sendEOT(emulator_addr, emulator_port, clientSocket, seqno)
-print("rec pack")
-recvd_packet = clientSocket.recv(1024)
-print(recvd_packet)
-typ, seqnum, length, data = Packet(recvd_packet).decode()
-if typ==2:
-    print("got eot from rec")
-    clientSocket.close()
+# sendEOT(emulator_addr, emulator_port, clientSocket, seqno)
+# print("rec pack")
+# recvd_packet = clientSocket.recv(1024)
+# print(recvd_packet)
+# typ, seqnum, length, data = Packet(recvd_packet).decode()
+ 
+ if __name__ == '__main__':
+    sendPacketThread = threading.Thread(target=sendPackets)
+    recAckThread = threading.Thread(target=recAck)
+    print("Starting sender.....")
+    sendPacketThread.start()
+    recAckThread.start()
+    while not sendPacketThread.is_alive():
+        pass
+    sendPacketThread.join()
+    while not recAckThread.is_alive():
+        pass
+    recAckThread.join()
