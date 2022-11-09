@@ -30,20 +30,6 @@ def addlog(file_name,data):
         print("opened {file_name} file")
         fp.write(str(timestamp) + " " + str(data) + "\n")
 
-
-# def convert_int_to_bytes(x):
-#     """
-#     Convenience function to convert Python integers to a length-8 byte representation
-#     """
-#     return x.to_bytes(8, "big")
-
-
-# def convert_bytes_to_int(xbytes):
-#     """
-#     Convenience function to convert byte value to integer value
-#     """
-#     return int.from_bytes(xbytes, "big")
-
 def sendEOT(emulator_addr, emulator_port, clientSocket, seqno):
     data = ""
     ptype = 2
