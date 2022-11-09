@@ -18,8 +18,8 @@ timestamp = 0
 
 windowsize = 1
 MAXN = 10
-send_base = 0
-nextseqnum = 0
+send_base = 0 #last unack
+nextseqnum = 0 #latest unesent
 
 alllogfiles = [seqnumlog,acklog,Nlog]
 for i in range(3):
@@ -85,6 +85,7 @@ with open(filename, mode="r") as fp:
 readptr = 0
 packets = [None] * 32
 def makePackets():
+    print("I am updating packets .....")
     global readptr
     if len(data)>500:
         while(readptr<=len(data)):
@@ -110,27 +111,33 @@ def makePackets():
 makePackets() #execute it once intially to initialise the packets list
 
 def sendPackets():
+    print("I want to send some pac ...")
+    print(threading.currentThread())
+    print("send threads")
+
     # print("send p is being invoked")
     global nextseqnum
     global send_base
     global windowsize
     global timestamp
     global sentEOT
+    
+    for i in range(windowsize):
+        if (nextseqnum-send_base)<windowsize and packets[nextseqnum]!=None:
+            print("Sending packet, ", nextseqnum)
+            if i==0:
+                timestamp+=1
+            clientSocket.sendto(packets[nextseqnum].encode(),(emulator_addr, emulator_port))
+            addlog(seqnumlog,packets[nextseqnum].seqnum) #add seq num to seq log
+            nextseqnum+=1
+            nextseqnum=nextseqnum%32
+    # newsendPacketThread = threading.Thread(target=sendPackets)
+    # newsendPacketThread.start()
 
-    if (nextseqnum-send_base)<windowsize and packets[nextseqnum]!=None:
-        print("Sending packet, ", nextseqnum)
-        clientSocket.sendto(packets[nextseqnum].encode(),(emulator_addr, emulator_port))
-        timestamp+=1
-        addlog(seqnumlog,packets[nextseqnum].seqnum) #add seq num to seq log
-        nextseqnum+=1
-        nextseqnum=nextseqnum%32
-    newsendPacketThread = threading.Thread(target=sendPackets)
-    newsendPacketThread.start()
-
-    if sentEOT:
+        if sentEOT:
         # print(nextseqnum,send_base)
-        print("killing sending packets")
-        sys.exit()
+            print("killing sending packets")
+            sys.exit()
 
     # if dup:
         
@@ -140,13 +147,18 @@ dupcount = 0
 
 def recAck():
 
+    print("I am waiting for ack ...")
+        # print("I want to send some pac ...")
+    print(threading.currentThread())
+    print("ack threads")
+
     global nextseqnum
     global send_base
     global windowsize
     global timestamp
     global dupcount
     global sentEOT
-
+# threading.Timer(timeout, func,)
     recvd_packet = Packet(clientSocket.recv(1024))
     timestamp+=1
     print("Received ack for .......", recvd_packet.seqnum)
@@ -161,22 +173,24 @@ def recAck():
     elif recvd_packet.seqnum == send_base:
         print("ack and rec until here: ", send_base)
         packets[:send_base+1]= [None] * len(packets[:send_base+1])
-        send_base+=1
-        send_base%=32
+        send_base += 1
+        send_base %= 32
         windowsize = min(windowsize+1,MAXN)
         addlog(Nlog,windowsize)
         makePackets()
-    elif recvd_packet.seqnum == send_base-1 and dupcount<3:
+    elif recvd_packet.seqnum == send_base - 1 and dupcount < 3:
         print("dup inc")
-        dupcount+=1
-    elif dupcount==3:
+        dupcount += 1
+    elif dupcount == 3:
         print("retransmitting.....")
         clientSocket.sendto(packets[send_base].encode(),(emulator_addr, emulator_port))
         windowsize = 1
         addlog(Nlog,windowsize)
         dupcount=0
-    newrecAckThread = threading.Thread(target=recAck)
-    newrecAckThread.start()
+    #new ack inc N restart timer 
+    #dup ack retrans inc timer
+    # newrecAckThread = threading.Thread(target=recAck)
+    # newrecAckThread.start()
     
         #restart timer
 
@@ -219,11 +233,13 @@ def recAck():
 # typ, seqnum, length, data = Packet(recvd_packet).decode()
  
 # if __name__ == '__main__':
-sendPacketThread = threading.Thread(target=sendPackets)
-recAckThread = threading.Thread(target=recAck)
+
 print("Starting sender.....")
-sendPacketThread.start()
-recAckThread.start()
+while not sentEOT:
+    sendPacketThread = threading.Thread(target=sendPackets)
+    recAckThread = threading.Thread(target=recAck)
+    sendPacketThread.start()
+    recAckThread.start()
 
 # while sendPacketThread.is_alive():
 #     print("sendp is alive")

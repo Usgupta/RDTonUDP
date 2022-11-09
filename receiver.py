@@ -78,7 +78,7 @@ def main(args):
 
             recvd_packet = Packet(serverSocket.recv(1024))
             print("got the packet")
-            print(recvd_packet)
+            print(recvd_packet.seqnum)
 
             typ, seqnum, length, data = recvd_packet.decode()
             logpacket(seqnum)
@@ -96,7 +96,7 @@ def main(args):
                 else:
                     print(" seq eq expec")
                     data_buff[seqnum] = data
-                    print(data_buff)
+                    # print(data_buff)
                     writedata(filename, data_buff)
                     sendACK(emulator_addr,emulator_port,serverSocket,expectedseq-1)
 
