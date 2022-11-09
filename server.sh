@@ -18,7 +18,7 @@
 #java server $1 
 
 #For Python implementation
-python3 network_emulator.py 14836 "129.97.167.27" 52081 6186 "129.97.167.52" 2658 1 0 1
+python3 network_emulator.py 14836 "129.97.167.52" 52081 6186 "129.97.167.27" 2658 1 0 0
 
 #For Ruby implementation
 #ruby server.rb $1
