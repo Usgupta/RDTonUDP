@@ -78,10 +78,10 @@ def main(args):
     
 
     try:
-        emulator_addr = "129.97.167.46" #emulator address 014
+        # emulator_addr = "129.97.167.46" #emulator address 014
 
         # emulator_addr = "129.97.167.47" #emulator address 010
-        # emulator_addr = "129.97.167.51" #emulator address 002
+        emulator_addr = "129.97.167.51" #emulator address 002
 
         emulator_port = 6186 #emulator port
         # clientSocket = socket(AF_INET, SOCK_DGRAM)
@@ -112,25 +112,29 @@ def main(args):
             logpacket(seqnum)
 
             # print("packet vals are", typ,seqnum,length,data)
+            if seqnum==expectedseq: 
 
-            if typ==2:
-                print("EOT")
+                if typ==2:
+                    print("EOT")
 
-                serverSocket.sendto(recvd_packet.encode(),(emulator_addr, emulator_port))
+                    serverSocket.sendto(recvd_packet.encode(),(emulator_addr, emulator_port))
 
-                # sendEOT(emulator_addr, emulator_port, clientSocket, len(finaldata))
-                exit()
-            else:
-                if seqnum!=expectedseq and seqnum in range(expectedseq,expectedseq+10):
-                    data_buff[seqnum] = data
-                    print("check not seq expec")
-                if seqnum == expectedseq:
+                    # sendEOT(emulator_addr, emulator_port, clientSocket, len(finaldata))
+                    exit()
+                else:
                     print(" seq eq expec")
                     data_buff[seqnum] = data
                     print(data_buff)
                     writedata(filename, data_buff)
-                print("sending ack")
+                    sendACK(emulator_addr,emulator_port,serverSocket,expectedseq-1)
+
+
+            else:
+                if seqnum in range(expectedseq,expectedseq+10):
+                    data_buff[seqnum] = data
+                    print("check not seq expec")
                 sendACK(emulator_addr,emulator_port,serverSocket,expectedseq-1)
+                # print("sending ack")
                 
                 # finaldata[seqnum]=data
                 # typ = 0
@@ -150,7 +154,7 @@ def writedata(filename, data_buff):
     print("writing data")
     with open(filename, mode="a") as fp:
         print("opened file")
-        print(expectedseq)
+        # print("my expected seq is: ",expectedseq)
         while data_buff[expectedseq]!=None:
             print("looping thru data: ", expectedseq)
             fp.write(data_buff[expectedseq])
