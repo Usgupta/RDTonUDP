@@ -9,7 +9,11 @@ import traceback
 from packet import Packet
 # import numpy as np
 
+file = open("rec.txt","w")
+file.close()
 
+file = open("arrival.log","w")
+file.close()
 # def convert_int_to_bytes(x):
 #     """
 #     Convenience function to convert Python integers to a length-8 byte representation
@@ -62,6 +66,10 @@ def sendACK(emulator_addr, emulator_port, clientSocket, seqno):
     print("ack packet: ", seqno)
     clientSocket.sendto(packet.encode(),(emulator_addr, emulator_port))
 
+def logpacket(seqnum):
+    with open("arrival.log", mode="a") as fp:
+        print("opened log file")
+        fp.write(str(seqnum) + "\n")
 
 def main(args):
     # port = int(args[0]) if len(args) > 0 else 4321
@@ -70,8 +78,9 @@ def main(args):
     
 
     try:
+        emulator_addr = "129.97.167.46" #emulator address 014
 
-        emulator_addr = "129.97.167.47" #emulator address 010
+        # emulator_addr = "129.97.167.47" #emulator address 010
         # emulator_addr = "129.97.167.51" #emulator address 002
 
         emulator_port = 6186 #emulator port
@@ -100,12 +109,14 @@ def main(args):
             print(recvd_packet)
 
             typ, seqnum, length, data = recvd_packet.decode()
+            logpacket(seqnum)
+
             # print("packet vals are", typ,seqnum,length,data)
 
             if typ==2:
                 print("EOT")
 
-                serverSocket.sendto(recvd_packet,(emulator_addr, emulator_port))
+                serverSocket.sendto(recvd_packet.encode(),(emulator_addr, emulator_port))
 
                 # sendEOT(emulator_addr, emulator_port, clientSocket, len(finaldata))
                 exit()

@@ -32,8 +32,9 @@ def sendEOT(emulator_addr, emulator_port, clientSocket, seqno):
     clientSocket.sendto(packet.encode(),(emulator_addr, emulator_port))
 
 MAXREADSIZE = 500
+emulator_addr = "129.97.167.46" #emulator address 014
 
-emulator_addr = "129.97.167.47" #emulator address 010
+# emulator_addr = "129.97.167.47" #emulator address 010
 # emulator_addr = "129.97.167.51" #emulator address 002
 emulator_port = 14836 #emulator port
 clientSocket = socket(AF_INET, SOCK_DGRAM)
