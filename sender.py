@@ -14,12 +14,15 @@ seqnumlog = "seqnum.log"
 acklog = "ack.log"
 Nlog = "N.log"
 
+lock = threading.Lock()
 timestamp = 0
-
 windowsize = 1
-MAXN = 10
-send_base = 0 #last unack
+send_base = 0 #last ack pack
 nextseqnum = 0 #latest unesent
+sentEOT = False
+
+MAXN = 10
+
 
 alllogfiles = [seqnumlog,acklog,Nlog]
 for i in range(3):
@@ -33,7 +36,6 @@ def addlog(file_name,data):
         print("opened file ",file_name)
         fp.write(str(timestamp) + " " + str(data) + "\n")
 
-sentEOT = False
 # def sendEOT(emulator_addr, emulator_port, clientSocket, seqno):
 #     data = ""
 #     ptype = 2
@@ -46,8 +48,8 @@ sentEOT = False
 # MAXREADSIZE = 500
 # emulator_addr = "129.97.167.46" #emulator address 014
 
-# emulator_addr = "129.97.167.47" #emulator address 010
-emulator_addr = "129.97.167.51" #emulator address 002
+emulator_addr = "129.97.167.47" #emulator address 010
+# emulator_addr = "129.97.167.51" #emulator address 002
 emulator_port = 14836 #emulator port
 clientSocket = socket(AF_INET, SOCK_DGRAM)
 sender_port = 2658
@@ -121,23 +123,26 @@ def sendPackets():
     global windowsize
     global timestamp
     global sentEOT
-    
-    for i in range(windowsize):
+
+    while True:
         if (nextseqnum-send_base)<windowsize and packets[nextseqnum]!=None:
+            lock.acquire()
             print("Sending packet, ", nextseqnum)
-            if i==0:
-                timestamp+=1
+            timestamp += 1
             clientSocket.sendto(packets[nextseqnum].encode(),(emulator_addr, emulator_port))
             addlog(seqnumlog,packets[nextseqnum].seqnum) #add seq num to seq log
-            nextseqnum+=1
-            nextseqnum=nextseqnum%32
-    # newsendPacketThread = threading.Thread(target=sendPackets)
-    # newsendPacketThread.start()
+            nextseqnum += 1
+            nextseqnum= nextseqnum%32
+        # newsendPacketThread = threading.Thread(target=sendPackets)
+        # newsendPacketThread.start()
+            lock.release()
+            if sentEOT:
+            # print(nextseqnum,send_base)
+                print("killing sending packets")
+                sys.exit()
+        else:
+            time.sleep(0.01)
 
-        if sentEOT:
-        # print(nextseqnum,send_base)
-            print("killing sending packets")
-            sys.exit()
 
     # if dup:
         
@@ -159,34 +164,41 @@ def recAck():
     global dupcount
     global sentEOT
 # threading.Timer(timeout, func,)
-    recvd_packet = Packet(clientSocket.recv(1024))
-    timestamp+=1
-    print("Received ack for .......", recvd_packet.seqnum)
-    # print(recvd_packet)
-    addlog(acklog,recvd_packet.seqnum) #add seq num to seq log
+    while True:
+        recvd_packet = Packet(clientSocket.recv(1024))
+        if recvd_packet:
+            lock.acquire()
+            timestamp+=1
+            print("Received ack for .......", recvd_packet.seqnum)
+            # print(recvd_packet)
+            addlog(acklog,recvd_packet.seqnum) #add seq num to seq log
 
-    if recvd_packet.typ == 2:
-        print("got eot from rec")
-        clientSocket.close()
-        sentEOT = True
-        sys.exit()
-    elif recvd_packet.seqnum == send_base:
-        print("ack and rec until here: ", send_base)
-        packets[:send_base+1]= [None] * len(packets[:send_base+1])
-        send_base += 1
-        send_base %= 32
-        windowsize = min(windowsize+1,MAXN)
-        addlog(Nlog,windowsize)
-        makePackets()
-    elif recvd_packet.seqnum == send_base - 1 and dupcount < 3:
-        print("dup inc")
-        dupcount += 1
-    elif dupcount == 3:
-        print("retransmitting.....")
-        clientSocket.sendto(packets[send_base].encode(),(emulator_addr, emulator_port))
-        windowsize = 1
-        addlog(Nlog,windowsize)
-        dupcount=0
+            if recvd_packet.typ == 2:
+                print("got eot from rec")
+                clientSocket.close()
+                sentEOT = True
+                sys.exit()
+            elif recvd_packet.seqnum == send_base:
+                print("ack and rec until here: ", send_base)
+                packets[:send_base+1]= [None] * len(packets[:send_base+1])
+                send_base += 1
+                send_base %= 32
+                windowsize = min(windowsize+1,MAXN)
+                addlog(Nlog,windowsize)
+                makePackets()
+            elif recvd_packet.seqnum == send_base - 1 and dupcount < 3:
+                print("dup inc")
+                dupcount += 1
+            elif dupcount == 3:
+                print("retransmitting.....")
+                clientSocket.sendto(packets[send_base].encode(),(emulator_addr, emulator_port))
+                windowsize = 1
+                addlog(Nlog,windowsize)
+                dupcount=0
+            lock.release()
+        else:
+            time.sleep(0.01)
+
     #new ack inc N restart timer 
     #dup ack retrans inc timer
     # newrecAckThread = threading.Thread(target=recAck)
@@ -235,11 +247,11 @@ def recAck():
 # if __name__ == '__main__':
 
 print("Starting sender.....")
-while not sentEOT:
-    sendPacketThread = threading.Thread(target=sendPackets)
-    recAckThread = threading.Thread(target=recAck)
-    sendPacketThread.start()
-    recAckThread.start()
+# while not sentEOT:
+sendPacketThread = threading.Thread(target=sendPackets)
+recAckThread = threading.Thread(target=recAck)
+sendPacketThread.start()
+recAckThread.start()
 
 # while sendPacketThread.is_alive():
 #     print("sendp is alive")
