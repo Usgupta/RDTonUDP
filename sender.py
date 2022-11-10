@@ -173,6 +173,7 @@ def sendPackets():
     global sentEOT
     global eotc
     global seqnums
+    global timer
     t = 0.01
     while True:
         
@@ -187,9 +188,7 @@ def sendPackets():
 
                     addlog(seqnumlog,"EOT") #add EOT to seq log
                     print("sending eot")
-                    # timer.cancel()
-                    # print("starting timer for:",nextseqnum)
-                    # timer.start()
+                 
                     clientSocket.sendto(packets[nextseqnum].encode(),(emulator_addr, emulator_port))
                     nextseqnum += 1
                     nextseqnum= nextseqnum%32
@@ -200,7 +199,7 @@ def sendPackets():
                     timestamp += 1
                     if nextseqnum==0:
                         print("starting timer for:",nextseqnum)
-                        # timer.start()
+                        timer.start()
                     clientSocket.sendto(packets[nextseqnum].encode(),(emulator_addr, emulator_port))
                     addlog(seqnumlog,packets[nextseqnum].seqnum) #add seq num to seq log
                     seqnums=[nextseqnum]
@@ -262,6 +261,7 @@ def recAck():
     global rcvEOT
     global lastACK
     global pacseqno
+    global timer
 # threading.Timer(timeout, func,)
     while True:
         print("rec is scheduled")
@@ -280,6 +280,7 @@ def recAck():
                 # addlog(acklog,)
                 clientSocket.close()
                 rcvEOT = True
+                timer.cancel()
                 sys.exit()
             else:
                 print("its not eot")
@@ -288,8 +289,9 @@ def recAck():
                     print("ack and rec until here: ", send_base)
                     send_base = recvd_packet.seqnum
                     print("cancelling and reset timer for no **********",send_base)
-                    # timer.cancel()
-                    # timer.start()
+                    timer.cancel()
+                    timer = threading.Timer(timeout,timerout)
+                    timer.start()
                     packets[:send_base+1]= [None] * len(packets[:send_base+1])
                     # send_base %= 32
                     windowsize = min(windowsize+1,MAXN)
@@ -307,8 +309,9 @@ def recAck():
                 elif dupcount == 3:
                     print("retransmitting.....")
                     print("cancelling for and reset timer for no **********",send_base)
-                    # timer.cancel()
-                    # timer.start()
+                    timer.cancel()
+                    timer = threading.Timer(timeout,timerout)
+                    timer.start()
                     clientSocket.sendto(packets[send_base+1].encode(),(emulator_addr, emulator_port))
                     windowsize = 1
                     addlog(Nlog,windowsize)
