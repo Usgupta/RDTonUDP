@@ -48,8 +48,8 @@ def addlog(file_name,data):
 # MAXREADSIZE = 500
 # emulator_addr = "129.97.167.46" #emulator address 014
 
-emulator_addr = "129.97.167.47" #emulator address 010
-# emulator_addr = "129.97.167.51" #emulator address 002
+# emulator_addr = "129.97.167.47" #emulator address 010
+emulator_addr = "129.97.167.51" #emulator address 002
 emulator_port = 14836 #emulator port
 clientSocket = socket(AF_INET, SOCK_DGRAM)
 sender_port = 2658
@@ -126,6 +126,7 @@ def sendPackets():
 
     while True:
         if (nextseqnum-send_base)<windowsize and packets[nextseqnum]!=None:
+            print("try acq lock send")
             lock.acquire()
             print("Sending packet, ", nextseqnum)
             timestamp += 1
@@ -141,6 +142,13 @@ def sendPackets():
                 print("killing sending packets")
                 sys.exit()
         else:
+            if sentEOT:
+            # print(nextseqnum,send_base)
+                print("killing sending packets")
+                sys.exit()
+                
+            print("cant send sleeping....")
+
             time.sleep(0.01)
 
 
@@ -167,6 +175,8 @@ def recAck():
     while True:
         recvd_packet = Packet(clientSocket.recv(1024))
         if recvd_packet:
+            print("try acq lock rec")
+
             lock.acquire()
             timestamp+=1
             print("Received ack for .......", recvd_packet.seqnum)
@@ -197,7 +207,9 @@ def recAck():
                 dupcount=0
             lock.release()
         else:
+            print("didnt rec sleeping....")
             time.sleep(0.01)
+        
 
     #new ack inc N restart timer 
     #dup ack retrans inc timer

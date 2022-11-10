@@ -52,8 +52,8 @@ def main(args):
     try:
         # emulator_addr = "129.97.167.46" #emulator address 014
 
-        emulator_addr = "129.97.167.47" #emulator address 010
-        # emulator_addr = "129.97.167.51" #emulator address 002
+        # emulator_addr = "129.97.167.47" #emulator address 010
+        emulator_addr = "129.97.167.51" #emulator address 002
 
         emulator_port = 6186 #emulator port
         # clientSocket = socket(AF_INET, SOCK_DGRAM)
@@ -85,6 +85,7 @@ def main(args):
 
             # print("packet vals are", typ,seqnum,length,data)
             if seqnum==expectedseq: 
+                print("got expected packet...",seqnum)
 
                 if typ==2:
                     print("EOT")
@@ -102,10 +103,12 @@ def main(args):
 
 
             else:
+                print("i expected packet - ", expectedseq, "got instead - ", seqnum)
+
                 if seqnum in range(expectedseq,expectedseq+10):
                     data_buff[seqnum] = data
-                    print("check not seq expec")
-                sendACK(emulator_addr,emulator_port,serverSocket,expectedseq-1)
+                    print("adding the pac to buffer")
+                sendACK(emulator_addr,emulator_port,serverSocket,expectedseq)
                 # print("sending ack")
                 
                 # finaldata[seqnum]=data
