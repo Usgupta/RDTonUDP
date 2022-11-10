@@ -48,8 +48,8 @@ def addlog(file_name,data):
 # MAXREADSIZE = 500
 # emulator_addr = "129.97.167.46" #emulator address 014
 
-# emulator_addr = "129.97.167.47" #emulator address 010
-emulator_addr = "129.97.167.51" #emulator address 002
+emulator_addr = "129.97.167.47" #emulator address 010
+# emulator_addr = "129.97.167.51" #emulator address 002
 emulator_port = 14836 #emulator port
 clientSocket = socket(AF_INET, SOCK_DGRAM)
 sender_port = 2658
@@ -109,6 +109,7 @@ def makePackets():
         ptype = 2
         lendata = 0
         packets[seqno] = Packet(ptype,seqno,lendata,"")
+        print("seqno of EOT is:", seqno)
 
 makePackets() #execute it once intially to initialise the packets list
 
@@ -131,7 +132,12 @@ def sendPackets():
             print("Sending packet, ", nextseqnum)
             timestamp += 1
             clientSocket.sendto(packets[nextseqnum].encode(),(emulator_addr, emulator_port))
-            addlog(seqnumlog,packets[nextseqnum].seqnum) #add seq num to seq log
+
+            if packets[nextseqnum].typ==2:
+                addlog(seqnumlog,"EOT") #add EOT to seq log
+            else:
+                addlog(seqnumlog,packets[nextseqnum].seqnum) #add seq num to seq log
+
             nextseqnum += 1
             nextseqnum= nextseqnum%32
         # newsendPacketThread = threading.Thread(target=sendPackets)
@@ -147,7 +153,7 @@ def sendPackets():
                 print("killing sending packets")
                 sys.exit()
                 
-            print("cant send sleeping....")
+            print("cant send sleeping....",sentEOT)
 
             time.sleep(0.01)
 
@@ -181,31 +187,34 @@ def recAck():
             timestamp+=1
             print("Received ack for .......", recvd_packet.seqnum)
             # print(recvd_packet)
-            addlog(acklog,recvd_packet.seqnum) #add seq num to seq log
 
             if recvd_packet.typ == 2:
                 print("got eot from rec")
+                addlog(acklog,"EOT")
+                # addlog(acklog,)
                 clientSocket.close()
                 sentEOT = True
                 sys.exit()
-            elif recvd_packet.seqnum == send_base:
-                print("ack and rec until here: ", send_base)
-                packets[:send_base+1]= [None] * len(packets[:send_base+1])
-                send_base += 1
-                send_base %= 32
-                windowsize = min(windowsize+1,MAXN)
-                addlog(Nlog,windowsize)
-                makePackets()
-            elif recvd_packet.seqnum == send_base - 1 and dupcount < 3:
-                print("dup inc")
-                dupcount += 1
-            elif dupcount == 3:
-                print("retransmitting.....")
-                clientSocket.sendto(packets[send_base].encode(),(emulator_addr, emulator_port))
-                windowsize = 1
-                addlog(Nlog,windowsize)
-                dupcount=0
-            lock.release()
+            else:
+                addlog(acklog,recvd_packet.seqnum) #add seq num to seq log
+                if recvd_packet.seqnum == send_base:
+                    print("ack and rec until here: ", send_base)
+                    packets[:send_base+1]= [None] * len(packets[:send_base+1])
+                    send_base += 1
+                    send_base %= 32
+                    windowsize = min(windowsize+1,MAXN)
+                    addlog(Nlog,windowsize)
+                    makePackets()
+                elif recvd_packet.seqnum == send_base - 1 and dupcount < 3:
+                    print("dup inc")
+                    dupcount += 1
+                elif dupcount == 3:
+                    print("retransmitting.....")
+                    clientSocket.sendto(packets[send_base].encode(),(emulator_addr, emulator_port))
+                    windowsize = 1
+                    addlog(Nlog,windowsize)
+                    dupcount=0
+                lock.release()
         else:
             print("didnt rec sleeping....")
             time.sleep(0.01)
