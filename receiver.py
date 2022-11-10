@@ -87,6 +87,7 @@ def main(args):
 
                 if typ==2:
                     print("EOT")
+                    print(recvd_packet)
 
                     serverSocket.sendto(recvd_packet.encode(),(emulator_addr, emulator_port))
 

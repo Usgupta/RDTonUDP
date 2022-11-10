@@ -19,7 +19,9 @@ timestamp = 0
 windowsize = 1
 send_base = 0 #last ack pack
 nextseqnum = 0 #latest unesent
+rcvEOT = False
 sentEOT = False
+
 
 MAXN = 10
 
@@ -84,32 +86,56 @@ with open(filename, mode="r") as fp:
     data = fp.read()
 # Send the file
 # readptr 
+pacseqno = -1
 readptr = 0
 packets = [None] * 32
 def makePackets():
+    global pacseqno
+    global sentEOT
     print("I am updating packets .....")
     global readptr
     if len(data)>500:
         while(readptr<=len(data)):
             if(len(packets)==32 and packets.count(None) == 0):
                 break
-            seqno = packets.index(None)
+            pacseqno += 1
+            pacseqno%=32
             ptype = 1
             lendata = len(data[readptr:min(readptr+500,len(data))])
+            if lendata==0:
+                pacseqno += 1
+                pacseqno%=32
+                ptype = 2
+                lendata = 0
+                packets[pacseqno] = Packet(ptype,pacseqno,lendata,"")
+                sentEOT = True
+                print("seqno of EOT is:", pacseqno)
+                pacseqno = None
+                break
+
+
             # print(readptr)
             # print(data[readptr:min(readptr+500,len(data))])
-            packet = Packet(ptype,seqno,lendata,data[readptr:min(readptr+500,len(data))])
-            packets[seqno] = packet
+            packet = Packet(ptype,pacseqno,lendata,data[readptr:min(readptr+500,len(data))])
+            packets[pacseqno] = packet
             readptr+=500
     else:
         packets[0] = packet(1,0,len(data),data)
+    print("val of the cond")
+    print((pacseqno!=None and (readptr>len(data) or len(data)<500)))
+    print((readptr>len(data) or len(data)<500))
+    
 
-    if readptr>len(data) or len(data)<500:
-        seqno = packets.index(None)
-        ptype = 2
-        lendata = 0
-        packets[seqno] = Packet(ptype,seqno,lendata,"")
-        print("seqno of EOT is:", seqno)
+    if ((readptr>len(data) or len(data)<500)):
+        if pacseqno!=None:
+            pacseqno += 1
+            pacseqno%=32
+            ptype = 2
+            lendata = 0
+            packets[pacseqno] = Packet(ptype,pacseqno,lendata,"")
+            sentEOT = True
+            print("seqno of EOT is:", pacseqno)
+            pacseqno = None
 
 makePackets() #execute it once intially to initialise the packets list
 
@@ -123,6 +149,7 @@ def sendPackets():
     global send_base
     global windowsize
     global timestamp
+    global rcvEOT
     global sentEOT
 
     while True:
@@ -143,17 +170,17 @@ def sendPackets():
         # newsendPacketThread = threading.Thread(target=sendPackets)
         # newsendPacketThread.start()
             lock.release()
-            if sentEOT:
+            if rcvEOT:
             # print(nextseqnum,send_base)
                 print("killing sending packets")
                 sys.exit()
         else:
-            if sentEOT:
+            if rcvEOT:
             # print(nextseqnum,send_base)
                 print("killing sending packets")
                 sys.exit()
                 
-            print("cant send sleeping....",sentEOT)
+            print("cant send sleeping....",rcvEOT)
 
             time.sleep(0.01)
 
@@ -176,7 +203,7 @@ def recAck():
     global windowsize
     global timestamp
     global dupcount
-    global sentEOT
+    global rcvEOT
 # threading.Timer(timeout, func,)
     while True:
         recvd_packet = Packet(clientSocket.recv(1024))
@@ -193,7 +220,7 @@ def recAck():
                 addlog(acklog,"EOT")
                 # addlog(acklog,)
                 clientSocket.close()
-                sentEOT = True
+                rcvEOT = True
                 sys.exit()
             else:
                 addlog(acklog,recvd_packet.seqnum) #add seq num to seq log
