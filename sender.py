@@ -22,7 +22,7 @@ send_base = 0 #last ack pack
 nextseqnum = 0 #latest unesent
 rcvEOT = False
 sentEOT = False
-
+timeout = 2
 
 MAXN = 10
 
@@ -38,6 +38,19 @@ def addlog(file_name,data):
     with open(file_name, mode="a") as fp:
         print("opened file ",file_name)
         fp.write(str(timestamp) + " " + str(data) + "\n")
+
+def timerout():
+    # print(currno)
+    # print(type(currno))
+    print("TIMER out for......................")
+
+# seqnums = []
+# seqnums.append(nextseqnum)
+# seqnums.append(3)
+# print(seqnums)
+timer = threading.Timer(timeout,timerout)
+
+
 # def sendEOT(emulator_addr, emulator_port, clientSocket, seqno):
 #     data = ""
 #     ptype = 2
@@ -50,9 +63,9 @@ def addlog(file_name,data):
 # MAXREADSIZE = 500
 # emulator_addr = "129.97.167.46" #emulator address 014
 
-emulator_addr = "129.97.167.47" #emulator address 010
-# emulator_addr = "129.97.167.51" #emulator address 002
-emulator_port = 14836 #emulator port
+# emulator_addr = "129.97.167.47" #emulator address 010
+emulator_addr = "129.97.167.51" #emulator address 002
+emulator_port = 39571 #emulator port
 clientSocket = socket(AF_INET, SOCK_DGRAM)
 sender_port = 2658
 clientSocket.bind(('', sender_port)) 
@@ -83,7 +96,6 @@ filename = "longtest.txt"
 # s.sendall(convert_int_to_bytes(len(filename_bytes)))
 # clientSocket.sendto(filename_bytes,(emulator_addr, emulator_port))
 lastACK = False
-
 with open(filename, mode="r") as fp:
     data = fp.read()
 
@@ -99,6 +111,7 @@ print("maxpac",MAXPACKETS)
 def makePackets():
     global pacseqno
     global sentEOT
+    global timeout
     print("I am updating packets .....")
     global readptr
     if len(data)>500:
@@ -159,6 +172,7 @@ def sendPackets():
     global rcvEOT
     global sentEOT
     global eotc
+    global seqnums
     t = 0.01
     while True:
         
@@ -173,6 +187,9 @@ def sendPackets():
 
                     addlog(seqnumlog,"EOT") #add EOT to seq log
                     print("sending eot")
+                    # timer.cancel()
+                    # print("starting timer for:",nextseqnum)
+                    # timer.start()
                     clientSocket.sendto(packets[nextseqnum].encode(),(emulator_addr, emulator_port))
                     nextseqnum += 1
                     nextseqnum= nextseqnum%32
@@ -181,8 +198,12 @@ def sendPackets():
             else:
                 if packets[nextseqnum].typ!=2:
                     timestamp += 1
+                    if nextseqnum==0:
+                        print("starting timer for:",nextseqnum)
+                        # timer.start()
                     clientSocket.sendto(packets[nextseqnum].encode(),(emulator_addr, emulator_port))
                     addlog(seqnumlog,packets[nextseqnum].seqnum) #add seq num to seq log
+                    seqnums=[nextseqnum]
                     nextseqnum += 1
                     nextseqnum= nextseqnum%32
                     print("release send lock")
@@ -266,6 +287,9 @@ def recAck():
                 if recvd_packet.seqnum >= send_base:
                     print("ack and rec until here: ", send_base)
                     send_base = recvd_packet.seqnum
+                    print("cancelling and reset timer for no **********",send_base)
+                    # timer.cancel()
+                    # timer.start()
                     packets[:send_base+1]= [None] * len(packets[:send_base+1])
                     # send_base %= 32
                     windowsize = min(windowsize+1,MAXN)
@@ -276,12 +300,15 @@ def recAck():
                         lastACK=True
                     else:
                         print(packets.count(None))
-                        print(packets)
+                        # print(packets)
                 elif recvd_packet.seqnum == send_base + 1 and dupcount < 3:
                     print("dup inc")
                     dupcount += 1
                 elif dupcount == 3:
                     print("retransmitting.....")
+                    print("cancelling for and reset timer for no **********",send_base)
+                    # timer.cancel()
+                    # timer.start()
                     clientSocket.sendto(packets[send_base+1].encode(),(emulator_addr, emulator_port))
                     windowsize = 1
                     addlog(Nlog,windowsize)
