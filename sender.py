@@ -3,6 +3,7 @@ from random import *
 import sys
 import pathlib
 import time
+import math
 
 from packet import Packet
 
@@ -37,7 +38,6 @@ def addlog(file_name,data):
     with open(file_name, mode="a") as fp:
         print("opened file ",file_name)
         fp.write(str(timestamp) + " " + str(data) + "\n")
-
 # def sendEOT(emulator_addr, emulator_port, clientSocket, seqno):
 #     data = ""
 #     ptype = 2
@@ -48,9 +48,9 @@ def addlog(file_name,data):
 #     clientSocket.sendto(packet.encode(),(emulator_addr, emulator_port))
 
 # MAXREADSIZE = 500
-# emulator_addr = "129.97.167.46" #emulator address 014
+emulator_addr = "129.97.167.46" #emulator address 014
 
-emulator_addr = "129.97.167.47" #emulator address 010
+# emulator_addr = "129.97.167.47" #emulator address 010
 # emulator_addr = "129.97.167.51" #emulator address 002
 emulator_port = 14836 #emulator port
 clientSocket = socket(AF_INET, SOCK_DGRAM)
@@ -82,13 +82,20 @@ filename = "longtest.txt"
 # s.sendall(convert_int_to_bytes(0))
 # s.sendall(convert_int_to_bytes(len(filename_bytes)))
 # clientSocket.sendto(filename_bytes,(emulator_addr, emulator_port))
+lastACK = False
+
 with open(filename, mode="r") as fp:
     data = fp.read()
+
 # Send the file
 # readptr 
 pacseqno = -1
 readptr = 0
 packets = [None] * 32
+MAXPACKETS = math.ceil(len(data)/500)
+MAXPACKETS%=32
+print("maxpac",MAXPACKETS)
+
 def makePackets():
     global pacseqno
     global sentEOT
@@ -158,15 +165,23 @@ def sendPackets():
             lock.acquire()
             print("Sending packet, ", nextseqnum)
             timestamp += 1
-            clientSocket.sendto(packets[nextseqnum].encode(),(emulator_addr, emulator_port))
-
-            if packets[nextseqnum].typ==2:
-                addlog(seqnumlog,"EOT") #add EOT to seq log
+            if lastACK:
+                if packets[nextseqnum].typ==2: 
+                    addlog(seqnumlog,"EOT") #add EOT to seq log
+                    print("sending eot")
+                    clientSocket.sendto(packets[nextseqnum].encode(),(emulator_addr, emulator_port))
+                    nextseqnum += 1
+                    nextseqnum= nextseqnum%32
             else:
-                addlog(seqnumlog,packets[nextseqnum].seqnum) #add seq num to seq log
+                if packets[nextseqnum].typ!=2:
+                    clientSocket.sendto(packets[nextseqnum].encode(),(emulator_addr, emulator_port))
+                    addlog(seqnumlog,packets[nextseqnum].seqnum) #add seq num to seq log
+                    nextseqnum += 1
+                    nextseqnum= nextseqnum%32
+                else:
+                    print("its an eot but cant send rn")
 
-            nextseqnum += 1
-            nextseqnum= nextseqnum%32
+            
         # newsendPacketThread = threading.Thread(target=sendPackets)
         # newsendPacketThread.start()
             lock.release()
@@ -181,6 +196,7 @@ def sendPackets():
                 sys.exit()
                 
             print("cant send sleeping....",rcvEOT)
+            print(windowsize,send_base,nextseqnum)
 
             time.sleep(0.01)
 
@@ -204,6 +220,8 @@ def recAck():
     global timestamp
     global dupcount
     global rcvEOT
+    global lastACK
+    global pacseqno
 # threading.Timer(timeout, func,)
     while True:
         recvd_packet = Packet(clientSocket.recv(1024))
@@ -214,7 +232,7 @@ def recAck():
             timestamp+=1
             print("Received ack for .......", recvd_packet.seqnum)
             # print(recvd_packet)
-
+            
             if recvd_packet.typ == 2:
                 print("got eot from rec")
                 addlog(acklog,"EOT")
@@ -232,6 +250,9 @@ def recAck():
                     windowsize = min(windowsize+1,MAXN)
                     addlog(Nlog,windowsize)
                     makePackets()
+                    if packets.count(None)==31 and pacseqno == None:
+                        print("i hv got the last ack")
+                        lastACK=True
                 elif recvd_packet.seqnum == send_base - 1 and dupcount < 3:
                     print("dup inc")
                     dupcount += 1
@@ -241,6 +262,7 @@ def recAck():
                     windowsize = 1
                     addlog(Nlog,windowsize)
                     dupcount=0
+                print("release rec lock")
                 lock.release()
         else:
             print("didnt rec sleeping....")
