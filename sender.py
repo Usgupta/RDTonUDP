@@ -48,9 +48,9 @@ def addlog(file_name,data):
 #     clientSocket.sendto(packet.encode(),(emulator_addr, emulator_port))
 
 # MAXREADSIZE = 500
-emulator_addr = "129.97.167.46" #emulator address 014
+# emulator_addr = "129.97.167.46" #emulator address 014
 
-# emulator_addr = "129.97.167.47" #emulator address 010
+emulator_addr = "129.97.167.47" #emulator address 010
 # emulator_addr = "129.97.167.51" #emulator address 002
 emulator_port = 14836 #emulator port
 clientSocket = socket(AF_INET, SOCK_DGRAM)
@@ -145,7 +145,7 @@ def makePackets():
             pacseqno = None
 
 makePackets() #execute it once intially to initialise the packets list
-
+eotc = 0
 def sendPackets():
     print("I want to send some pac ...")
     print(threading.currentThread())
@@ -158,33 +158,53 @@ def sendPackets():
     global timestamp
     global rcvEOT
     global sentEOT
-
+    global eotc
+    t = 0.01
     while True:
+        
         if (nextseqnum-send_base)<windowsize and packets[nextseqnum]!=None:
-            print("try acq lock send")
             lock.acquire()
+
+            print("try acq lock send")
             print("Sending packet, ", nextseqnum)
-            timestamp += 1
             if lastACK:
                 if packets[nextseqnum].typ==2: 
+                    timestamp += 1
+
                     addlog(seqnumlog,"EOT") #add EOT to seq log
                     print("sending eot")
                     clientSocket.sendto(packets[nextseqnum].encode(),(emulator_addr, emulator_port))
                     nextseqnum += 1
                     nextseqnum= nextseqnum%32
+                    print("release send lock")
+                    lock.release()
             else:
                 if packets[nextseqnum].typ!=2:
+                    timestamp += 1
                     clientSocket.sendto(packets[nextseqnum].encode(),(emulator_addr, emulator_port))
                     addlog(seqnumlog,packets[nextseqnum].seqnum) #add seq num to seq log
                     nextseqnum += 1
                     nextseqnum= nextseqnum%32
-                else:
-                    print("its an eot but cant send rn")
+                    print("release send lock")
+                    lock.release()
 
-            
-        # newsendPacketThread = threading.Thread(target=sendPackets)
-        # newsendPacketThread.start()
-            lock.release()
+                else:
+                    # t = 10
+                    
+                    # if eotc==3:
+                    #     lock.release()
+                    #     # sys.exit()
+                    # else:
+                    #     eotc+=1
+                    print("its an eot but cant send rn")
+                    print("release send lock")
+                    lock.release()
+                    time.sleep(0.1)
+                    # time.sleep(10)
+                    # lock.release()
+            # print("release send lock")
+            # lock.release()
+            # lock.release()
             if rcvEOT:
             # print(nextseqnum,send_base)
                 print("killing sending packets")
@@ -199,7 +219,6 @@ def sendPackets():
             print(windowsize,send_base,nextseqnum)
 
             time.sleep(0.01)
-
 
     # if dup:
         
@@ -224,15 +243,16 @@ def recAck():
     global pacseqno
 # threading.Timer(timeout, func,)
     while True:
+        print("rec is scheduled")
         recvd_packet = Packet(clientSocket.recv(1024))
         if recvd_packet:
             print("try acq lock rec")
-
+            print(lock.locked())
             lock.acquire()
             timestamp+=1
             print("Received ack for .......", recvd_packet.seqnum)
             # print(recvd_packet)
-            
+            print(lock.locked())
             if recvd_packet.typ == 2:
                 print("got eot from rec")
                 addlog(acklog,"EOT")
@@ -241,27 +261,33 @@ def recAck():
                 rcvEOT = True
                 sys.exit()
             else:
+                print("its not eot")
                 addlog(acklog,recvd_packet.seqnum) #add seq num to seq log
-                if recvd_packet.seqnum == send_base:
+                if recvd_packet.seqnum >= send_base:
                     print("ack and rec until here: ", send_base)
+                    send_base = recvd_packet.seqnum
                     packets[:send_base+1]= [None] * len(packets[:send_base+1])
-                    send_base += 1
-                    send_base %= 32
+                    # send_base %= 32
                     windowsize = min(windowsize+1,MAXN)
                     addlog(Nlog,windowsize)
                     makePackets()
                     if packets.count(None)==31 and pacseqno == None:
                         print("i hv got the last ack")
                         lastACK=True
-                elif recvd_packet.seqnum == send_base - 1 and dupcount < 3:
+                    else:
+                        print(packets.count(None))
+                        print(packets)
+                elif recvd_packet.seqnum == send_base + 1 and dupcount < 3:
                     print("dup inc")
                     dupcount += 1
                 elif dupcount == 3:
                     print("retransmitting.....")
-                    clientSocket.sendto(packets[send_base].encode(),(emulator_addr, emulator_port))
+                    clientSocket.sendto(packets[send_base+1].encode(),(emulator_addr, emulator_port))
                     windowsize = 1
                     addlog(Nlog,windowsize)
                     dupcount=0
+                else:
+                    print("i got some ack which i didnt expect", recvd_packet.seqnum,send_base)
                 print("release rec lock")
                 lock.release()
         else:
