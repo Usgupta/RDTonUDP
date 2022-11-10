@@ -18,11 +18,11 @@ Nlog = "N.log"
 lock = threading.Lock()
 timestamp = 0
 windowsize = 1
-send_base = 0 #last ack pack
+send_base = -1 #last ack pack
 nextseqnum = 0 #latest unesent
 rcvEOT = False
 sentEOT = False
-timeout = 2
+timeout = 0.1
 
 MAXN = 10
 
@@ -39,16 +39,12 @@ def addlog(file_name,data):
         print("opened file ",file_name)
         fp.write(str(timestamp) + " " + str(data) + "\n")
 
-def timerout():
-    # print(currno)
-    # print(type(currno))
-    print("TIMER out for......................")
+
 
 # seqnums = []
 # seqnums.append(nextseqnum)
 # seqnums.append(3)
 # print(seqnums)
-timer = threading.Timer(timeout,timerout)
 
 
 # def sendEOT(emulator_addr, emulator_port, clientSocket, seqno):
@@ -63,8 +59,8 @@ timer = threading.Timer(timeout,timerout)
 # MAXREADSIZE = 500
 # emulator_addr = "129.97.167.46" #emulator address 014
 
-# emulator_addr = "129.97.167.47" #emulator address 010
-emulator_addr = "129.97.167.51" #emulator address 002
+emulator_addr = "129.97.167.47" #emulator address 010
+# emulator_addr = "129.97.167.51" #emulator address 002
 emulator_port = 39571 #emulator port
 clientSocket = socket(AF_INET, SOCK_DGRAM)
 sender_port = 2658
@@ -107,6 +103,31 @@ packets = [None] * 32
 MAXPACKETS = math.ceil(len(data)/500)
 MAXPACKETS%=32
 print("maxpac",MAXPACKETS)
+
+def timerout():
+    # print(currno)
+    # print(type(currno))
+    global timer
+    global windowsize
+    global send_base
+    global lock
+    print("GET TIMER LOCK")
+    lock.acquire()
+    
+    print("TIMER out for......................",send_base+1)
+    print("retransmitting.....")
+    print("cancelling for and reset timer for no **********",send_base+1)
+    # timer.cancel()
+    # timer = threading.Timer(timeout,timerout)
+    # clientSocket.sendto(packets[send_base+1].encode(),(emulator_addr, emulator_port))
+    # windowsize = 1
+    # addlog(Nlog,windowsize)
+    # timer.start()
+    lock.release()
+    print("RELEASE TIMER LOCK")
+
+    
+timer = threading.Timer(timeout,timerout)
 
 def makePackets():
     global pacseqno
@@ -177,7 +198,7 @@ def sendPackets():
     t = 0.01
     while True:
         
-        if (nextseqnum-send_base)<windowsize and packets[nextseqnum]!=None:
+        if ((nextseqnum-send_base)<windowsize and packets[nextseqnum]!=None) or (send_base==-1 and nextseqnum==0):
             lock.acquire()
 
             print("try acq lock send")
@@ -188,7 +209,6 @@ def sendPackets():
 
                     addlog(seqnumlog,"EOT") #add EOT to seq log
                     print("sending eot")
-                 
                     clientSocket.sendto(packets[nextseqnum].encode(),(emulator_addr, emulator_port))
                     nextseqnum += 1
                     nextseqnum= nextseqnum%32
@@ -268,12 +288,12 @@ def recAck():
         recvd_packet = Packet(clientSocket.recv(1024))
         if recvd_packet:
             print("try acq lock rec")
-            print(lock.locked())
+            # print(lock.locked())
             lock.acquire()
             timestamp+=1
             print("Received ack for .......", recvd_packet.seqnum)
             # print(recvd_packet)
-            print(lock.locked())
+            # print(lock.locked())
             if recvd_packet.typ == 2:
                 print("got eot from rec")
                 addlog(acklog,"EOT")
@@ -293,6 +313,7 @@ def recAck():
                     timer = threading.Timer(timeout,timerout)
                     timer.start()
                     packets[:send_base+1]= [None] * len(packets[:send_base+1])
+                    #restart timer here
                     # send_base %= 32
                     windowsize = min(windowsize+1,MAXN)
                     addlog(Nlog,windowsize)
@@ -303,7 +324,7 @@ def recAck():
                     else:
                         print(packets.count(None))
                         # print(packets)
-                elif recvd_packet.seqnum == send_base + 1 and dupcount < 3:
+                elif recvd_packet.seqnum == (send_base + 1) and dupcount < 3:
                     print("dup inc")
                     dupcount += 1
                 elif dupcount == 3:
