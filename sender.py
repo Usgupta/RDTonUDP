@@ -59,8 +59,8 @@ def addlog(file_name,data):
 # MAXREADSIZE = 500
 # emulator_addr = "129.97.167.46" #emulator address 014
 
-emulator_addr = "129.97.167.47" #emulator address 010
-# emulator_addr = "129.97.167.51" #emulator address 002
+# emulator_addr = "129.97.167.47" #emulator address 010
+emulator_addr = "129.97.167.51" #emulator address 002
 emulator_port = 39571 #emulator port
 clientSocket = socket(AF_INET, SOCK_DGRAM)
 sender_port = 2658
@@ -117,12 +117,12 @@ def timerout():
     print("TIMER out for......................",send_base+1)
     print("retransmitting.....")
     print("cancelling for and reset timer for no **********",send_base+1)
-    # timer.cancel()
-    # timer = threading.Timer(timeout,timerout)
-    # clientSocket.sendto(packets[send_base+1].encode(),(emulator_addr, emulator_port))
-    # windowsize = 1
-    # addlog(Nlog,windowsize)
-    # timer.start()
+    timer.cancel()
+    timer = threading.Timer(timeout,timerout)
+    clientSocket.sendto(packets[send_base+1].encode(),(emulator_addr, emulator_port))
+    windowsize = 1
+    addlog(Nlog,windowsize)
+    timer.start()
     lock.release()
     print("RELEASE TIMER LOCK")
 
@@ -197,9 +197,9 @@ def sendPackets():
     global timer
     t = 0.01
     while True:
-        
+        lock.acquire()
+
         if ((nextseqnum-send_base)<windowsize and packets[nextseqnum]!=None) or (send_base==-1 and nextseqnum==0):
-            lock.acquire()
 
             print("try acq lock send")
             print("Sending packet, ", nextseqnum)
@@ -229,13 +229,7 @@ def sendPackets():
                     lock.release()
 
                 else:
-                    # t = 10
-                    
-                    # if eotc==3:
-                    #     lock.release()
-                    #     # sys.exit()
-                    # else:
-                    #     eotc+=1
+        
                     print("its an eot but cant send rn")
                     print("release send lock")
                     lock.release()
@@ -248,13 +242,15 @@ def sendPackets():
             if rcvEOT:
             # print(nextseqnum,send_base)
                 print("killing sending packets")
+                # lock.release()
                 sys.exit()
         else:
             if rcvEOT:
             # print(nextseqnum,send_base)
                 print("killing sending packets")
+                lock.release()
                 sys.exit()
-                
+            lock.release()    
             print("cant send sleeping....",rcvEOT)
             print(windowsize,send_base,nextseqnum)
 
@@ -301,6 +297,7 @@ def recAck():
                 clientSocket.close()
                 rcvEOT = True
                 timer.cancel()
+                lock.release()
                 sys.exit()
             else:
                 print("its not eot")
