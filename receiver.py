@@ -52,8 +52,8 @@ def main(args):
     try:
         # emulator_addr = "129.97.167.46" #emulator address 014
 
-        emulator_addr = "129.97.167.47" #emulator address 010
-        # emulator_addr = "129.97.167.51" #emulator address 002
+        # emulator_addr = "129.97.167.47" #emulator address 010
+        emulator_addr = "129.97.167.51" #emulator address 002
 
         emulator_port = 1037 #emulator port
         # clientSocket = socket(AF_INET, SOCK_DGRAM)
@@ -71,7 +71,6 @@ def main(args):
                             # print(file_data)
 
         filename = "rec.txt"
-        finaldata = {}
 
         while True:
             recvd_packet = Packet(serverSocket.recv(1024))

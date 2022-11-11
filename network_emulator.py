@@ -11,17 +11,17 @@ max_delay = None # max delay a packet can be delayed by in milliseconds
 forward_recv_port = 39571 # the port to listen on to get messages from the sender
 backward_recv_port = 1037 # emulator's receiving UDP port from receiver
 
-receiver_addr = "129.97.167.52" # receiver's network address 004
-receiver_recv_port = 52081 # receiver's receiving UDP port
-
-sender_addr = "129.97.167.27" # sender's network address 008
-sender_recv_port = 2658 # the sender's receiving UDP port number
-
-# receiver_addr = "129.97.167.27" # receiver's network address 008
+# receiver_addr = "129.97.167.52" # receiver's network address 004
 # receiver_recv_port = 52081 # receiver's receiving UDP port
 
-# sender_addr = "129.97.167.52"# sender's network address 004
+# sender_addr = "129.97.167.27" # sender's network address 008
 # sender_recv_port = 2658 # the sender's receiving UDP port number
+
+receiver_addr = "129.97.167.27" # receiver's network address 008
+receiver_recv_port = 52081 # receiver's receiving UDP port
+
+sender_addr = "129.97.167.52"# sender's network address 004
+sender_recv_port = 2658 # the sender's receiving UDP port number
 
 prob_discard = 0 # the probability a packet is discarded
 
