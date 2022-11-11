@@ -43,7 +43,7 @@ def addlog(file_name,data):
     Takes the file name and data (either EOT or sequence number) and logs it in the file
     """
     with open(file_name, mode="a") as fp:
-        print("opened file ",file_name)
+        print("writing to file: ",file_name)
         fp.write(str(timestamp) + " " + str(data) + "\n")
 
 
@@ -54,7 +54,7 @@ emulator_addr = "129.97.167.46" #emulator address 014
 # emulator_addr = "129.97.167.51" #emulator address 002
 emulator_port = 39571 #emulator port
 clientSocket = socket(AF_INET, SOCK_DGRAM) #create socket for sending to emulator
-sender_port = 2658
+sender_port = 29785
 clientSocket.bind(('', sender_port)) #binding socket with port 
 
 filename = "longtest.txt" # file name to be sent

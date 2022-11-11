@@ -58,7 +58,7 @@ def main(args):
         # emulator_addr = "129.97.167.51" #emulator address 002
 
         emulator_port = 1037 #emulator port
-        rec_port = 52081
+        rec_port = 28850
         serverSocket = socket(AF_INET, SOCK_DGRAM)
         serverSocket.bind(('', rec_port)) 
 
