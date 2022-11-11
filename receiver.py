@@ -62,7 +62,7 @@ def main(args):
         serverSocket = socket(AF_INET, SOCK_DGRAM)
         serverSocket.bind(('', rec_port)) 
 
-        filename = "rec.txt"
+        filename = "received.txt"
 
         while True:
             recvd_packet = Packet(serverSocket.recv(1024))
