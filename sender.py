@@ -59,8 +59,8 @@ def addlog(file_name,data):
 # MAXREADSIZE = 500
 # emulator_addr = "129.97.167.46" #emulator address 014
 
-# emulator_addr = "129.97.167.47" #emulator address 010
-emulator_addr = "129.97.167.51" #emulator address 002
+emulator_addr = "129.97.167.47" #emulator address 010
+# emulator_addr = "129.97.167.51" #emulator address 002
 emulator_port = 39571 #emulator port
 clientSocket = socket(AF_INET, SOCK_DGRAM)
 sender_port = 2658
@@ -119,7 +119,8 @@ def timerout():
     print("cancelling for and reset timer for no **********",send_base+1)
     timer.cancel()
     timer = threading.Timer(timeout,timerout)
-    clientSocket.sendto(packets[send_base+1].encode(),(emulator_addr, emulator_port))
+    if not lastACK:
+        clientSocket.sendto(packets[send_base+1].encode(),(emulator_addr, emulator_port))
     windowsize = 1
     addlog(Nlog,windowsize)
     timer.start()
@@ -210,8 +211,8 @@ def sendPackets():
                     addlog(seqnumlog,"EOT") #add EOT to seq log
                     print("sending eot")
                     clientSocket.sendto(packets[nextseqnum].encode(),(emulator_addr, emulator_port))
-                    nextseqnum += 1
-                    nextseqnum= nextseqnum%32
+                    # nextseqnum += 1
+                    # nextseqnum= nextseqnum%32
                     print("release send lock")
                     lock.release()
             else:
@@ -293,6 +294,8 @@ def recAck():
             if recvd_packet.typ == 2:
                 print("got eot from rec")
                 addlog(acklog,"EOT")
+                send_base = recvd_packet.seqnum
+                packets[:send_base+1]= [None] * len(packets[:send_base+1])
                 # addlog(acklog,)
                 clientSocket.close()
                 rcvEOT = True
