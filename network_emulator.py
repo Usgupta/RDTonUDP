@@ -11,6 +11,8 @@ max_delay = None # max delay a packet can be delayed by in milliseconds
 forward_recv_port = 39571 # the port to listen on to get messages from the sender
 backward_recv_port = 1037 # emulator's receiving UDP port from receiver
 
+receiver_addr = "129.97.167.51" # receiver's network address 002
+
 receiver_addr = "129.97.167.52" # receiver's network address 004
 receiver_recv_port = 52081 # receiver's receiving UDP port
 
