@@ -16,25 +16,32 @@ acklog = "ack.log"
 Nlog = "N.log"
 
 lock = threading.Lock()
-timestamp = 0
-windowsize = 1
-send_base = -1 #last ack pack
-nextseqnum = 0 #latest unesent
-rcvEOT = False
-sentEOT = False
-timeout = 0.1
+timestamp = 0 # to record the timestamps for logging
+windowsize = 1 # window size of our sender
+send_base = -1 #last ack packet sequence number
+nextseqnum = 0 #latest unesent packet sequence number
+rcvEOT = False #check whether we have received EOT
+sentEOT = False #check whether we have sent EOT
+timeout = 0.1 #timeout value 100 ms for the timer
 
-MAXN = 10
+MAXN = 10 #maximum value of our window 
 
 
+# opening all the log files and removing any previous data
 alllogfiles = [seqnumlog,acklog,Nlog]
+
 for i in range(3):
     file = open(alllogfiles[i],"w")
     if alllogfiles[i]=="N.log":
         file.write(str(timestamp) + " " + str(windowsize) + "\n")
     file.close()
 
+# function to log the timestamp and se all the log files and removing any previous data
+
 def addlog(file_name,data):
+    """
+    Takes the file name and data (either EOT or sequence number) and logs it in the file
+    """
     with open(file_name, mode="a") as fp:
         print("opened file ",file_name)
         fp.write(str(timestamp) + " " + str(data) + "\n")
@@ -62,20 +69,11 @@ def addlog(file_name,data):
 # emulator_addr = "129.97.167.47" #emulator address 010
 emulator_addr = "129.97.167.51" #emulator address 002
 emulator_port = 39571 #emulator port
-clientSocket = socket(AF_INET, SOCK_DGRAM)
+clientSocket = socket(AF_INET, SOCK_DGRAM) #create socket for sending to emulator
 sender_port = 2658
-clientSocket.bind(('', sender_port)) 
+clientSocket.bind(('', sender_port)) #binding socket with port 
 
-# print(sender_port)
-all_processes = []
-
-
-# integer type; # // 0: ACK, 1: Data, 2: EOT
-# integer seqnum; # // Modulo 32
-# integer length; # // Length of the String variable ‘data’ // String with Max Length 500
-# String data;
-
-filename = "longtest.txt"
+filename = "longtest.txt" # file name to be sent
 
 # while filename != "-1" and (not pathlib.Path(filename).is_file()):
 #     filename = input("Invalid filename. Please try again:").strip()
@@ -84,27 +82,28 @@ filename = "longtest.txt"
 #     s.sendall(convert_int_to_bytes(2))
 #     break
 
-# filename_bytes = bytes(filename, encoding="utf8")
 
-# Send the filename
-# clientSocket.sendto(filename.encode(),(serverName, serverPort))
-# s.sendall(convert_int_to_bytes(0))
-# s.sendall(convert_int_to_bytes(len(filename_bytes)))
-# clientSocket.sendto(filename_bytes,(emulator_addr, emulator_port))
-lastACK = False
+lastACK = False #check if the last ack has been received
+
+#read all the file data and store in global var data
 with open(filename, mode="r") as fp:
     data = fp.read()
 
-# Send the file
-# readptr 
-pacseqno = -1
-readptr = 0
-packets = [None] * 32
+
+
+pacseqno = -1 #packet seq number used for generating packets
+readptr = 0 #counter for keeping track of the characters in var data used for generating packets
+packets = [None] * 32 #packet list containing at max 32 packets at a given time
+
 MAXPACKETS = math.ceil(len(data)/500)
-MAXPACKETS%=32
-print("maxpac",MAXPACKETS)
+MAXPACKETS%=32 #sequence number of eot when all packets have been sent
+
 
 def timerout():
+    """
+    Timeout function for the Timer 
+    Retransmits the oldest sent but not acknowledged packet 
+    """
     # print(currno)
     # print(type(currno))
     global timer
@@ -134,12 +133,15 @@ def timerout():
 timer = threading.Timer(timeout,timerout)
 
 def makePackets():
+    """
+    generates packets using data var and stores them in packets list
+    """
     global pacseqno
     global sentEOT
     global timeout
     print("I am updating packets .....")
     global readptr
-    if len(data)>500:
+    if len(data)>500: #if the data is more than 500 characters
         while(readptr<=len(data)):
             if(len(packets)==32 and packets.count(None) == 0):
                 break
@@ -147,30 +149,25 @@ def makePackets():
             pacseqno%=32
             ptype = 1
             lendata = len(data[readptr:min(readptr+500,len(data))])
+            #if no more data to send we generate EOT
             if lendata==0:
                 pacseqno += 1
                 pacseqno%=32
                 ptype = 2
                 lendata = 0
                 packets[pacseqno] = Packet(ptype,pacseqno,lendata,"")
-                # sentEOT = True
                 print("seqno of EOT is:", pacseqno)
                 pacseqno = None
                 break
 
-
-            # print(readptr)
-            # print(data[readptr:min(readptr+500,len(data))])
             packet = Packet(ptype,pacseqno,lendata,data[readptr:min(readptr+500,len(data))])
             packets[pacseqno] = packet
             readptr+=500
-    else:
+    else: #packet has less then 500 characters 
         packets[0] = packet(1,0,len(data),data)
-    print("val of the cond")
-    print((pacseqno!=None and (readptr>len(data) or len(data)<500)))
-    print((readptr>len(data) or len(data)<500))
-    
 
+    
+    #if no more data to send we generate EOT
     if ((readptr>len(data) or len(data)<500)):
         if pacseqno!=None:
             pacseqno += 1
