@@ -199,14 +199,13 @@ def sendPackets():
     while True:
         lock.acquire(timeout=1)
 
-        if ((nextseqnum-send_base)<windowsize and packets[nextseqnum]!=None) or (send_base==-1 and nextseqnum==0):
+        if ((nextseqnum-send_base)<=windowsize and packets[nextseqnum]!=None) or (send_base==-1 and nextseqnum==0):
 
             print("try acq lock send")
             print("Sending packet, ", nextseqnum)
             if (lastACK and (not sentEOT)):
                 if packets[nextseqnum].typ==2: 
                     timestamp += 1
-
                     addlog(seqnumlog,"EOT") #add EOT to seq log
                     print("sending eot")
                     clientSocket.sendto(packets[nextseqnum].encode(),(emulator_addr, emulator_port))
@@ -256,6 +255,7 @@ def sendPackets():
                 print("killing sending packets")
                 lock.release()
                 sys.exit()
+            print("hey")
             lock.release()    
             print("cant send sleeping....",rcvEOT)
             print(windowsize,send_base,nextseqnum)
@@ -330,6 +330,8 @@ def recAck():
                 timer.start()
                 if packets.count(None)==30 and pacseqno == None:
                     print("i hv got the last ack")
+
+                    # nextseqnum = MAXPACKETS
                     lastACK=True
                 else:
                     print(packets.count(None))
