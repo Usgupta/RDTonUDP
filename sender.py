@@ -120,7 +120,7 @@ def timerout():
     print("cancelling for and reset timer for no **********",send_base+1)
     timer.cancel()
     timer = threading.Timer(timeout,timerout)
-    if not lastACK:
+    if not lastACK and packets[send_base+1]!=None:
         clientSocket.sendto(packets[send_base+1].encode(),(emulator_addr, emulator_port))
         windowsize = 1
         timestamp+=1
@@ -183,7 +183,6 @@ def makePackets():
             pacseqno = None
 
 makePackets() #execute it once intially to initialise the packets list
-eotc = 0
 def sendPackets():
     print("I want to send some pac ...")
     print(threading.currentThread())
@@ -196,10 +195,7 @@ def sendPackets():
     global timestamp
     global rcvEOT
     global sentEOT
-    global eotc
-    global seqnums
     global timer
-    t = 0.01
     while True:
         lock.acquire()
 
@@ -322,7 +318,6 @@ def recAck():
                 print("cancelling and reset timer for no **********",send_base)
                 timer.cancel()
                 timer = threading.Timer(timeout,timerout)
-                timer.start()
                 tempval = packets[send_base]
                 packets[:send_base]= [None] * len(packets[:send_base])
                 #restart timer here
@@ -330,7 +325,8 @@ def recAck():
                 windowsize = min(windowsize+1,MAXN)
                 addlog(Nlog,windowsize)
                 makePackets()
-                if packets.count(None)==31 and pacseqno == None:
+                timer.start()
+                if packets.count(None)==30 and pacseqno == None:
                     print("i hv got the last ack")
                     lastACK=True
                 else:
