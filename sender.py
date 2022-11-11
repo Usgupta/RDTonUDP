@@ -52,7 +52,7 @@ emulator_addr = "129.97.167.46" #emulator address 014
 
 # emulator_addr = "129.97.167.47" #emulator address 010
 # emulator_addr = "129.97.167.51" #emulator address 002
-emulator_port = 39571 #emulator port
+emulator_port = 60482 #emulator port
 clientSocket = socket(AF_INET, SOCK_DGRAM) #create socket for sending to emulator
 sender_port = 29785
 clientSocket.bind(('', sender_port)) #binding socket with port 
@@ -209,7 +209,6 @@ def sendPackets():
             
             if rcvEOT:
                 print("we have received EOT from receiver, exiting from sending packets thread")
-                lock.release()
                 sys.exit()
         else:
             if rcvEOT:

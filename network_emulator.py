@@ -8,8 +8,8 @@ import socket
 # initialize to dumby values for sanity checking purposes
 max_delay = None # max delay a packet can be delayed by in milliseconds
 
-forward_recv_port = 39571 # the port to listen on to get messages from the sender
-backward_recv_port = 1037 # emulator's receiving UDP port from receiver
+forward_recv_port = 60482 # the port to listen on to get messages from the sender
+backward_recv_port = 62032 # emulator's receiving UDP port from receiver
 
 # receiver_addr = "129.97.167.51" # receiver's network address 002
 
