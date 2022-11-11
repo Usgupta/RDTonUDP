@@ -1,4 +1,3 @@
-# import imp
 import pathlib
 from socket import *
 import sys
@@ -7,19 +6,22 @@ from datetime import datetime
 import secrets
 import traceback
 from packet import Packet
-# import numpy as np
 
+# opening all the log files and removing any previous data
 file = open("rec.txt","w")
 file.close()
 
 file = open("arrival.log","w")
 file.close()
 
-expectedseq = 0
-
-data_buff = [None] * 32
+expectedseq = 0 # expected packet sequence number
+ 
+data_buff = [None] * 32 #data buffer list
 
 def sendEOT(emulator_addr, emulator_port, clientSocket, seqno):
+    """
+    takes in the ip address, port number socket and packet sequence number to send the EOT packet 
+    """
     data = ""
     ptype = 2
     seqno += 1
@@ -29,25 +31,25 @@ def sendEOT(emulator_addr, emulator_port, clientSocket, seqno):
     clientSocket.sendto(packet.encode(),(emulator_addr, emulator_port))
 
 def sendACK(emulator_addr, emulator_port, clientSocket, seqno):
+    """
+    takes in the ip address, port number socket and packet sequence number to send the ACK for a packet 
+    """
     data = ""
     ptype = 0
-    # seqno += 1
-    # seqno=seqno%32
     lendata = 0
     packet = Packet(ptype,seqno,lendata,data)
     print("ack packet: ", seqno)
     clientSocket.sendto(packet.encode(),(emulator_addr, emulator_port))
 
 def logpacket(seqnum):
+    """
+    takes in the packet sequence number and writes to arrival.log file to record the arrived packet sequence number 
+    """
     with open("arrival.log", mode="a") as fp:
         print("opened log file")
         fp.write(str(seqnum) + "\n")
 
 def main(args):
-    # port = int(args[0]) if len(args) > 0 else 4321
-    # address = args[1] if len(args) > 1 else "localhost"
-
-    
 
     try:
         emulator_addr = "129.97.167.46" #emulator address 014
@@ -56,49 +58,33 @@ def main(args):
         # emulator_addr = "129.97.167.51" #emulator address 002
 
         emulator_port = 1037 #emulator port
-        # clientSocket = socket(AF_INET, SOCK_DGRAM)
         rec_port = 52081
-        # serverPort = port
         serverSocket = socket(AF_INET, SOCK_DGRAM)
         serverSocket.bind(('', rec_port)) 
-                            # If the packet is for transferring a chunk of the file
-                            # start_time = time.time()
-
-                            # file_len = convert_bytes_to_int(
-                                # read_bytes(client_socket, 8)
-                            # )
-                            # file_data = read_bytes(client_socket, file_len)
-                            # print(file_data)
 
         filename = "rec.txt"
 
         while True:
             recvd_packet = Packet(serverSocket.recv(1024))
-            print("got a packet ", recvd_packet.seqnum)
-            # print(recvd_packet.seqnum)
+            print("got a packet numbered: ", recvd_packet.seqnum)
 
-            typ, seqnum, length, data = recvd_packet.decode()
-            logpacket(seqnum)
+            typ, seqnum, length, data = recvd_packet.decode() #retrieve packet values
+            logpacket(seqnum) #log received packet seq no
 
-            # print("packet vals are", typ,seqnum,length,data)
             if seqnum==expectedseq: 
                 print("got expected packet...",seqnum)
 
+                #if received packet is EOT send back an EOT packet and exit 
                 if typ==2:
                     print("EOT")
-                    print(recvd_packet)
-
                     serverSocket.sendto(recvd_packet.encode(),(emulator_addr, emulator_port))
-
-                    # sendEOT(emulator_addr, emulator_port, clientSocket, len(finaldata))
                     exit()
                 else:
                     print(" seq eq expec")
-                    data_buff[seqnum] = data
+                    data_buff[seqnum] = data #add data to buffer
                     # print(data_buff)
-                    writedata(filename, data_buff)
-                    sendACK(emulator_addr,emulator_port,serverSocket,expectedseq-1)
-
+                    writedata(filename, data_buff) #write data to file
+                    sendACK(emulator_addr,emulator_port,serverSocket,expectedseq-1) #send ACK
 
             else:
                 print("i expected packet - ", expectedseq, "got instead - ", seqnum)
@@ -107,22 +93,14 @@ def main(args):
                     data_buff[seqnum] = data
                     print("adding the pac to buffer")
                 sendACK(emulator_addr,emulator_port,serverSocket,expectedseq)
-                # print("sending ack")
-                
-                # finaldata[seqnum]=data
-                # typ = 0
-
-
-            # message1, clientAddress = serverSocket.recvfrom(2048) 
-            # message2, clientAddress = serverSocket.recvfrom(2048) 
-
-
-            # Write the file with 'recv_' prefix
-                
+                                
     except Exception as e:
         print(e)
 
 def writedata(filename, data_buff):
+    """
+    
+    """
     global expectedseq
     print("writing data")
     with open(filename, mode="a") as fp:
