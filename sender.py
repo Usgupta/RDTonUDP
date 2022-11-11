@@ -315,6 +315,8 @@ def recAck():
             if recvd_packet.seqnum > send_base:
                 print("ack and rec until here: ", send_base)
                 send_base = recvd_packet.seqnum
+                if(send_base>nextseqnum):
+                    nextseqnum = send_base+1
                 print("cancelling and reset timer for no **********",send_base)
                 timer.cancel()
                 timer = threading.Timer(timeout,timerout)
