@@ -37,6 +37,7 @@ for i in range(3):
 def addlog(file_name,data):
     with open(file_name, mode="a") as fp:
         print("opened file ",file_name)
+        # print()
         fp.write(str(timestamp) + " " + str(data) + "\n")
 
 
@@ -111,6 +112,8 @@ def timerout():
     global windowsize
     global send_base
     global lock
+    global timestamp
+    global lastACK
     print("GET TIMER LOCK")
     lock.acquire()
     
