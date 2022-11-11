@@ -129,6 +129,7 @@ def writedata(filename, data_buff):
         print("opened file")
         # print("my expected seq is: ",expectedseq)
         while data_buff[expectedseq]!=None:
+            # if(data_buff)
             print("looping thru data: ", expectedseq)
             fp.write(data_buff[expectedseq])
             data_buff[expectedseq] = None

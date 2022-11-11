@@ -113,7 +113,7 @@ def timerout():
     global lock
     global timestamp
     print("GET TIMER LOCK")
-    lock.acquire()
+    lock.acquire(timeout=1)
     
     print("TIMER out for......................",send_base+1)
     print("retransmitting.....")
@@ -197,7 +197,7 @@ def sendPackets():
     global sentEOT
     global timer
     while True:
-        lock.acquire()
+        lock.acquire(timeout=1)
 
         if ((nextseqnum-send_base)<windowsize and packets[nextseqnum]!=None) or (send_base==-1 and nextseqnum==0):
 
@@ -239,7 +239,7 @@ def sendPackets():
                     print("its an eot but cant send rn")
                     print("release send lock")
                     lock.release()
-                    time.sleep(0.1)
+                    time.sleep(0.01)
                     # time.sleep(10)
                     # lock.release()
             # print("release send lock")
@@ -288,12 +288,12 @@ def recAck():
     while True:
         print("rec is scheduled")
         recvd_packet = Packet(clientSocket.recv(1024))
-        print(recvd_packet)
-        print(lock.locked())
+        # print(recvd_packet)
+        # print(lock.locked())
         # if recvd_packet:
         print("try acq lock rec")
         # print(lock.locked())
-        lock.acquire()
+        lock.acquire(timeout=1)
         timestamp+=1
         print("Received ack for .......", recvd_packet.seqnum)
         # print(recvd_packet)
