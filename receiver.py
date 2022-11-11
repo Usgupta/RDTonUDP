@@ -99,25 +99,21 @@ def main(args):
 
 def writedata(filename, data_buff):
     """
+    writes the data from buffer to a file. updates the expected sequence number for the next packet
     
     """
     global expectedseq
     print("writing data")
     with open(filename, mode="a") as fp:
         print("opened file")
-        # print("my expected seq is: ",expectedseq)
         while data_buff[expectedseq]!=None:
             # if(data_buff)
             print("looping thru data: ", expectedseq)
             fp.write(data_buff[expectedseq])
             data_buff[expectedseq] = None
             expectedseq+=1
-
-                    # fp.write(message2)
-    print("finidhed")
-                    # f"Finished receiving file in {(time.time() - start_time)}s!"
-                # )
-        # s.close()
+            expectedseq%=32
+    print("finished writing data")
 
 
 if __name__ == "__main__":
