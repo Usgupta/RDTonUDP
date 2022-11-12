@@ -39,29 +39,6 @@ sentEOT = False #check whether we have sent EOT
 dupcount = 0 #to check for dup ACKs
 MAXN = 10 #maximum value of our window 
 
-# emulator_addr = "129.97.167.46" #emulator address 014
-# emulator_port = 60482 #emulator port
-# clientSocket = socket(AF_INET, SOCK_DGRAM) #create socket for sending to emulator
-# sender_port = 29785 #port to receive packets from emulator i.e Sender's receiving UDP port number
-# clientSocket.bind(('', sender_port)) #binding socket with port 
-
-# filename = "longtest.txt" # file name to be sent
-
-
-# lastACK = False #check if the last ack has been received
-
-# lock = threading.Lock()
-# timestamp = 0 # to record the timestamps for logging
-# windowsize = 1 # window size of our sender
-# send_base = -1 #last ack packet sequence number
-# nextseqnum = 0 #latest unesent packet sequence number
-# rcvEOT = False #check whether we have received EOT
-# sentEOT = False #check whether we have sent EOT
-# timeout = 0.1 #timeout value 100 ms for the timer
-# dupcount = 0 #to check for dup ACKs
-# MAXN = 10 #maximum value of our window 
-
-
 # opening all the log files and removing any previous data
 alllogfiles = [seqnumlog,acklog,Nlog]
 
