@@ -13,19 +13,23 @@ Run the following command in terminal to run the network emulator `./nemulator.s
 
 To change the arguements of network emulator edit the `./nemulator.sh` file
 
+Use the order present in the comments for order
+
 ### Running the Sender
 
-Run the command python3 sender.py
+Run the following command in terminal to run the network emulator `./sender.sh`
 
-To change the file to be sent, add the file in the same directory as the sender.py file and change the filename var value on line 60
+To change the arguements of network emulator edit the `./sender.sh` file
+
+Use the order present in the comments for order
 
 ### Runnning the Receiver
 
-Run the command python3 receiver.py
+Run the following command in terminal to run the network emulator `./receiver.sh`
 
-To change the name of the file receive, change the filename var value on line 14. The default name is `received.txt` and it will be produced in the same directory as the `receiver.py` file
+To change the arguements of network emulator edit the `./receiver.sh` file
 
-
+Use the order present in the comments for order
 
 ## Undergrad machines your program was built and tested on
 
@@ -37,7 +41,6 @@ It has been tested on the following, running client and server on same machine a
 • ubuntu2004-008.student.cs.uwaterloo.ca
 • ubuntu2004-010.student.cs.uwaterloo.ca
 • ubuntu2004-014.student.cs.uwaterloo.ca
-
 
 ### Version of make used
 
