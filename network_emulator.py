@@ -11,15 +11,15 @@ max_delay = None # max delay a packet can be delayed by in milliseconds
 forward_recv_port = None # the port to listen on to get messages from the sender
 backward_recv_port = None # emulator's receiving UDP port from receiver
 
-receiver_addr = None # receiver's network address 004
+receiver_addr = None # receiver's network address
 receiver_recv_port = None # receiver's receiving UDP port
 
-sender_addr = None # sender's network address 008
+sender_addr = None # sender's network address
 sender_recv_port = None # the sender's receiving UDP port number
 
-prob_discard = 0 # the probability a packet is discarded
+prob_discard = None # the probability a packet is discarded
 
-verbose = True 
+verbose = False 
 
 data_buff = Queue()
 ack_buff = Queue()
@@ -121,9 +121,6 @@ if __name__ == '__main__':
     parser.add_argument("<drop probability>", help="packet discard probability")
     parser.add_argument('<verbose>', nargs='?', default=0)
     args = parser.parse_args()
-
-
-
     # set up sockets to be listening on
     args = args.__dict__ # A LAZY FIX
     max_delay = int(args["<Maximum Delay>"])
@@ -147,7 +144,6 @@ if __name__ == '__main__':
     forwardThread.start()
     backwardThread.start()
     while not forwardThread.is_alive():
-        print(forwardThread.is_alive())
         pass
     forwardThread.join()
     while not backwardThread.is_alive():

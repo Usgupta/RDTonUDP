@@ -15,9 +15,6 @@ seqnumlog = "seqnum.log"
 acklog = "ack.log"
 Nlog = "N.log"
 
-# python3 <host address of the network emulator>, <UDP port number used by the emulator to receive data from the sender>, <UDP port number used by the sender to receive ACKs from the emulator>, <timeout interval in units of millisecond>, and <name of the file to be transferred>
-
-
 emulator_addr = sys.argv[1] #emulator address 014
 emulator_port = int(sys.argv[2]) #emulator port
 clientSocket = socket(AF_INET, SOCK_DGRAM) #create socket for sending to emulator
@@ -39,6 +36,19 @@ sentEOT = False #check whether we have sent EOT
 dupcount = 0 #to check for dup ACKs
 MAXN = 10 #maximum value of our window 
 
+
+pacseqno = -1 #packet seq number used for generating packets
+readptr = 0 #counter for keeping track of the characters in var data used for generating packets
+packets = [None] * 32 #packet list containing at max 32 packets at a given time
+
+#read all the file data and store in global var data
+with open(filename, mode="r") as fp:
+    data = fp.read()
+
+
+MAXPACKETS = math.ceil(len(data)/500)
+MAXPACKETS%=32 #sequence number of eot when all packets have been sent
+
 # opening all the log files and removing any previous data
 alllogfiles = [seqnumlog,acklog,Nlog]
 
@@ -57,21 +67,6 @@ def addlog(file_name,data):
     with open(file_name, mode="a") as fp:
         print("writing to file: ",file_name)
         fp.write(str(timestamp) + " " + str(data) + "\n")
-
-
-
-#read all the file data and store in global var data
-with open(filename, mode="r") as fp:
-    data = fp.read()
-
-
-
-pacseqno = -1 #packet seq number used for generating packets
-readptr = 0 #counter for keeping track of the characters in var data used for generating packets
-packets = [None] * 32 #packet list containing at max 32 packets at a given time
-
-MAXPACKETS = math.ceil(len(data)/500)
-MAXPACKETS%=32 #sequence number of eot when all packets have been sent
 
 
 def timerout():
@@ -104,7 +99,7 @@ def timerout():
     print("RELEASE TIMER LOCK")
 
     
-timer = threading.Timer(timeout,timerout)
+timer = threading.Timer(timeout,timerout) #declare the timer 
 
 def makePackets():
     """
