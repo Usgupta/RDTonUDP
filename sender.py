@@ -15,6 +15,20 @@ seqnumlog = "seqnum.log"
 acklog = "ack.log"
 Nlog = "N.log"
 
+# python3 <host address of the network emulator>, <UDP port number used by the emulator to receive data from the sender>, <UDP port number used by the sender to receive ACKs from the emulator>, <timeout interval in units of millisecond>, and <name of the file to be transferred>
+
+
+emulator_addr = sys.argv[1] #emulator address 014
+emulator_port = int(sys.argv[2]) #emulator port
+clientSocket = socket(AF_INET, SOCK_DGRAM) #create socket for sending to emulator
+sender_port = int(sys.argv[3]) #port to receive packets from emulator i.e Sender's receiving UDP port number
+timeout = float(sys.argv[4]) #timeout value 100 ms for the timer
+clientSocket.bind(('', sender_port)) #binding socket with port 
+
+filename = sys.argv[5] # file name to be sent
+
+lastACK = False #check if the last ack has been received
+
 lock = threading.Lock()
 timestamp = 0 # to record the timestamps for logging
 windowsize = 1 # window size of our sender
@@ -22,9 +36,30 @@ send_base = -1 #last ack packet sequence number
 nextseqnum = 0 #latest unesent packet sequence number
 rcvEOT = False #check whether we have received EOT
 sentEOT = False #check whether we have sent EOT
-timeout = 0.1 #timeout value 100 ms for the timer
 dupcount = 0 #to check for dup ACKs
 MAXN = 10 #maximum value of our window 
+
+# emulator_addr = "129.97.167.46" #emulator address 014
+# emulator_port = 60482 #emulator port
+# clientSocket = socket(AF_INET, SOCK_DGRAM) #create socket for sending to emulator
+# sender_port = 29785 #port to receive packets from emulator i.e Sender's receiving UDP port number
+# clientSocket.bind(('', sender_port)) #binding socket with port 
+
+# filename = "longtest.txt" # file name to be sent
+
+
+# lastACK = False #check if the last ack has been received
+
+# lock = threading.Lock()
+# timestamp = 0 # to record the timestamps for logging
+# windowsize = 1 # window size of our sender
+# send_base = -1 #last ack packet sequence number
+# nextseqnum = 0 #latest unesent packet sequence number
+# rcvEOT = False #check whether we have received EOT
+# sentEOT = False #check whether we have sent EOT
+# timeout = 0.1 #timeout value 100 ms for the timer
+# dupcount = 0 #to check for dup ACKs
+# MAXN = 10 #maximum value of our window 
 
 
 # opening all the log files and removing any previous data
@@ -47,20 +82,6 @@ def addlog(file_name,data):
         fp.write(str(timestamp) + " " + str(data) + "\n")
 
 
-
-emulator_addr = "129.97.167.46" #emulator address 014
-
-# emulator_addr = "129.97.167.47" #emulator address 010
-# emulator_addr = "129.97.167.51" #emulator address 002
-emulator_port = 60482 #emulator port
-clientSocket = socket(AF_INET, SOCK_DGRAM) #create socket for sending to emulator
-sender_port = 29785
-clientSocket.bind(('', sender_port)) #binding socket with port 
-
-filename = "longtest.txt" # file name to be sent
-
-
-lastACK = False #check if the last ack has been received
 
 #read all the file data and store in global var data
 with open(filename, mode="r") as fp:

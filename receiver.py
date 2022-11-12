@@ -8,27 +8,18 @@ import traceback
 from packet import Packet
 
 # opening all the log files and removing any previous data
-file = open("rec.txt","w")
+
+expectedseq = 0 # expected packet sequence number
+data_buff = [None] * 32 #data buffer list
+# filename = "received.txt"
+filename = sys.argv[4]
+
+
+file = open(filename,"w")
 file.close()
 
 file = open("arrival.log","w")
 file.close()
-
-expectedseq = 0 # expected packet sequence number
- 
-data_buff = [None] * 32 #data buffer list
-
-def sendEOT(emulator_addr, emulator_port, clientSocket, seqno):
-    """
-    takes in the ip address, port number socket and packet sequence number to send the EOT packet 
-    """
-    data = ""
-    ptype = 2
-    seqno += 1
-    seqno=seqno%32
-    lendata = 0
-    packet = Packet(ptype,seqno,lendata,data)
-    clientSocket.sendto(packet.encode(),(emulator_addr, emulator_port))
 
 def sendACK(emulator_addr, emulator_port, clientSocket, seqno):
     """
@@ -50,19 +41,20 @@ def logpacket(seqnum):
         fp.write(str(seqnum) + "\n")
 
 def main(args):
+    global filename
 
     try:
-        emulator_addr = "129.97.167.46" #emulator address 014
+        emulator_addr = sys.argv[1] #emulator address 014
 
-        # emulator_addr = "129.97.167.47" #emulator address 010
-        # emulator_addr = "129.97.167.51" #emulator address 002
+        emulator_port = int(sys.argv[2]) #emulator port
+        rec_port = int(sys.argv[3])
 
-        emulator_port = 62032 #emulator port
-        rec_port = 28850
+        # emulator_addr = "129.97.167.46" #emulator address 014
+
+        # emulator_port = 62032 #emulator port
+        # rec_port = 28850
         serverSocket = socket(AF_INET, SOCK_DGRAM)
         serverSocket.bind(('', rec_port)) 
-
-        filename = "received.txt"
 
         while True:
             recvd_packet = Packet(serverSocket.recv(1024))
